@@ -7,7 +7,7 @@ function App() {
 
   const getData = async () => {
     try {
-      const response = await invoke<string>('fetch_data');
+      const response = await invoke<string>('parse_match_data');
       setResult(response);
     } catch (error) {
       console.error('Error: ', error);
