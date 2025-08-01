@@ -1,9 +1,11 @@
+use crate::types::MatchData;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum Responses {
     Puuid(PuuidData),
+    Match(MatchData),
 }
 
 #[derive(Debug, Deserialize, Serialize)]

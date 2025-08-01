@@ -1,482 +1,415 @@
-// Full fixed file with types/interfaces added
-import "./App.css";
-import { useState, useEffect } from "react";
-import {
-  Trophy,
-  Target,
-  TrendingUp,
-  Clock,
-  Star,
-  Shield,
-  //  Sword,
-  Zap,
-  Users,
-  Calendar,
-  Award,
-  Activity,
-  LucideIcon,
-} from "lucide-react";
+import "./App_copy.css";
+import { invoke } from "@tauri-apps/api/core";
+import { convertFileSrc } from "@tauri-apps/api/core";
+import React from "react";
+import { useState } from "react";
+import { useEffect } from "react";
 
-// Interfaces
-interface SummonerData {
-  displayName: string;
-  level: number;
-  profileIconId: number;
-  rank: {
-    tier: string;
-    division: string;
-    lp: number;
-  };
-  winRate: number;
-  recentGames: number;
-  favoriteRole: string;
-  mainChampion: string;
-}
+// Define the type aliases outside the component for better organization
+// and to make them available throughout your file if needed.
+type SpellPair = [number, number];
+type Spells = SpellPair[];
 
-interface Match {
-  id: number;
-  champion: string;
-  result: "Victory" | "Defeat";
-  kda: string;
-  duration: string;
-  gameMode: string;
-  timestamp: string;
-  cs: number;
-}
+function App() {
+  // Define interfaces if they are used elsewhere.
+  // If only used within this component, they can stay here,
+  // but often it's cleaner to put them in a separate types.ts file.
+  interface PuuidData {
+    puuid: string;
+    game_name: string;
+    tag_line: string;
+  }
 
-interface ChampionMastery {
-  name: string;
-  level: number;
-  points: number;
-  icon: string;
-}
+  interface MatchData {
+    gameId: number;
+    mapId: number;
+    gameMode: string;
+    gameType: string;
+    gameQueueConfigId: number;
+    participants: Participant[];
+    observers: Observers;
+    platformId: string;
+    bannedChampions: BannedChampion[];
+    gameStartTime: number;
+    gameLength: number;
+  }
 
-interface ChampionMasteryCardProps {
-  champion: ChampionMastery;
-}
+  interface Participant {
+    puuid: string;
+    teamId: number;
+    spell1Id: number;
+    spell2Id: number;
+    championId: number;
+    profileIconId: number;
+    riotId: string;
+    bot: boolean;
+    gameCustomizationObjects: unknown[]; // equivalent to Vec<Value>
+    perks: Perks;
+  }
 
-interface MatchHistoryItemProps {
-  match: Match;
-}
+  interface Perks {
+    perkIds: number[];
+    perkStyle: number;
+    perkSubStyle: number;
+  }
 
-interface StatCardProps {
-  icon: LucideIcon;
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  trend?: number;
-  color?:
-    | "blue"
-    | "green"
-    | "red"
-    | "yellow"
-    | "purple"
-    | "pink"
-    | "indigo"
-    | "orange";
-}
+  interface Observers {
+    encryptionKey: string;
+  }
 
-// Mock data
-const mockSummonerData: SummonerData = {
-  displayName: "RiftMaster2024",
-  level: 87,
-  profileIconId: 4371,
-  rank: { tier: "GOLD", division: "II", lp: 64 },
-  winRate: 73,
-  recentGames: 15,
-  favoriteRole: "ADC",
-  mainChampion: "Jinx",
-};
+  interface BannedChampion {
+    championId: number; // -1 indicates no ban
+    teamId: number;
+    pickTurn: number;
+  }
 
-const mockMatchHistory: Match[] = [
-  {
-    id: 1,
-    champion: "Jinx",
-    result: "Victory",
-    kda: "12/3/7",
-    duration: "28:45",
-    gameMode: "Ranked Solo",
-    timestamp: "2 hours ago",
-    cs: 287,
-  },
-  {
-    id: 2,
-    champion: "Caitlyn",
-    result: "Defeat",
-    kda: "8/6/4",
-    duration: "35:12",
-    gameMode: "Ranked Solo",
-    timestamp: "4 hours ago",
-    cs: 245,
-  },
-  {
-    id: 3,
-    champion: "Vayne",
-    result: "Victory",
-    kda: "15/2/9",
-    duration: "42:33",
-    gameMode: "Ranked Solo",
-    timestamp: "6 hours ago",
-    cs: 312,
-  },
-  {
-    id: 4,
-    champion: "Ezreal",
-    result: "Victory",
-    kda: "9/4/12",
-    duration: "31:28",
-    gameMode: "Ranked Solo",
-    timestamp: "1 day ago",
-    cs: 201,
-  },
-  {
-    id: 5,
-    champion: "Kai'Sa",
-    result: "Defeat",
-    kda: "6/8/3",
-    duration: "26:15",
-    gameMode: "Ranked Solo",
-    timestamp: "1 day ago",
-    cs: 178,
-  },
-];
+  // Type for the possible responses from `mains` command if you uncomment it later
+  type Responses = { Puuid: PuuidData } | { Match: MatchData };
 
-const mockChampionMastery: ChampionMastery[] = [
-  { name: "Jinx", level: 7, points: 284750, icon: "🎯" },
-  { name: "Caitlyn", level: 6, points: 167432, icon: "🔫" },
-  { name: "Vayne", level: 5, points: 89234, icon: "🏹" },
-  { name: "Ezreal", level: 4, points: 45678, icon: "✨" },
-];
+  // Use useState to manage the summoner_spells data
+  const [summonerSpells, setSummonerSpells] = useState<Spells>([]);
+  var [path, setPath] = useState("");
+  // Removed 'result' state as it wasn't being used correctly to display `summoner_spells`
+  // and removed the var summoner_spells declaration as it's replaced by state.
 
-// Components
-const ChampionMasteryCard: React.FC<ChampionMasteryCardProps> = ({
-  champion,
-}) => (
-  <div className="bg-gray-800/40 rounded-lg p-4 hover:bg-gray-800/60 transition-colors duration-200">
-    <div className="flex items-center space-x-3">
-      <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-xl">
-        {champion.icon}
-      </div>
-      <div className="flex-1">
-        <h4 className="font-semibold text-white">{champion.name}</h4>
-        <div className="flex items-center space-x-2">
-          <span
-            className={`text-xs px-2 py-1 rounded ${
-              {
-                7: "bg-purple-500/20 text-purple-400",
-                6: "bg-blue-500/20 text-blue-400",
-                5: "bg-green-500/20 text-green-400",
-                4: "bg-yellow-500/20 text-yellow-400",
-              }[champion.level as 4 | 5 | 6 | 7] ??
-              "bg-gray-500/20 text-gray-400"
-            }`}
-          >
-            Level {champion.level}
-          </span>
-          <span className="text-xs text-gray-400">
-            {champion.points.toLocaleString()} pts
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const MatchHistoryItem: React.FC<MatchHistoryItemProps> = ({ match }) => (
-  <div
-    className={`bg-gray-800/40 rounded-lg p-4 border-l-4 ${
-      match.result === "Victory" ? "border-green-500" : "border-red-500"
-    } hover:bg-gray-800/60 transition-colors duration-200`}
-  >
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
-        <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-xl">
-          {match.champion[0]}
-        </div>
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="font-semibold text-white">{match.champion}</span>
-            <span
-              className={`text-sm px-2 py-1 rounded ${
-                match.result === "Victory"
-                  ? "bg-green-500/20 text-green-400"
-                  : "bg-red-500/20 text-red-400"
-              }`}
-            >
-              {match.result}
-            </span>
-          </div>
-          <div className="text-sm text-gray-400">
-            {match.gameMode} • {match.timestamp}
-          </div>
-        </div>
-      </div>
-      <div className="text-right">
-        <div className="font-mono text-white">{match.kda}</div>
-        <div className="text-sm text-gray-400">
-          {match.cs} CS • {match.duration}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const StatCard: React.FC<StatCardProps> = ({
-  icon: Icon,
-  title,
-  value,
-  subtitle,
-  trend,
-  color = "blue",
-}) => (
-  <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:transform hover:scale-105">
-    <div className="flex items-center justify-between mb-4">
-      <div className={`p-3 rounded-lg bg-${color}-500/20`}>
-        <Icon className={`w-6 h-6 text-${color}-400`} />
-      </div>
-      {trend !== undefined && (
-        <div
-          className={`flex items-center text-sm ${
-            trend > 0 ? "text-green-400" : "text-red-400"
-          }`}
-        >
-          <TrendingUp className="w-4 h-4 mr-1" />
-          {trend > 0 ? "+" : ""}
-          {trend}%
-        </div>
-      )}
-    </div>
-    <h3 className="text-2xl font-bold text-white mb-1">{value}</h3>
-    <p className="text-sm text-gray-400">{title}</p>
-    {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
-  </div>
-);
-
-export default function LeagueDashboard() {
-  const [isLive, setIsLive] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [counter, setCounter] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    // This runs every 1000ms (1 second)
+    const interval = setInterval(async () => {
+      console.log("Main loop tick!");
+      setCounter((prev) => prev + 1);
+      // Do your main loop work here:
+      // - Update game data
+      // - Fetch new information
+      // - Check for changes
+      // etc.
+    }, 1000);
+
+    // Cleanup function - important to prevent memory leaks
+    return () => clearInterval(interval);
   }, []);
 
-  const toggleLiveGame = () => setIsLive(!isLive);
+  const getData = async () => {
+    try {
+      // Assuming 'get_summoner_spells' returns Spells type: [number, number][]
+      const response: Spells = await invoke("get_summoner_spells");
+      const application_path: string = await invoke("get_image_path", {
+        name: "SummonerFlash",
+      });
+      await invoke("mains");
+      setPath(
+        application_path.replace(/\//g, "\\").replace("SummonerFlash.png", "")
+      );
+      console.log(path);
+      console.log("Received summoner spells:", response);
+      // Update the state with the received data
+      setSummonerSpells(response);
+    } catch (error) {
+      console.error("Error fetching summoner spells:", error);
+    }
+  };
+
+  // Helper function to generate image URLs based on spell IDs
+  // You'll need to replace this with your actual image URL logic
+  interface ChampionData {
+    key: number;
+    name: string;
+  }
+
+  interface SpellData {
+    name: string;
+    cooldown: number; // in seconds
+  }
+
+  interface Dictionary<T> {
+    [Key: string]: T;
+  }
+
+  const champion_data_map: Dictionary<String> = {
+    1: "Annie",
+    2: "Olaf",
+    3: "Galio",
+    4: "TwistedFate",
+    5: "XinZhao",
+    6: "Urgot",
+    7: "LeBlanc",
+    8: "Vladimir",
+    9: "Fiddlesticks",
+    10: "Kayle",
+    11: "MasterYi",
+    12: "Alistar",
+    13: "Ryze",
+    14: "Sion",
+    15: "Sivir",
+    16: "Soraka",
+    17: "Teemo",
+    18: "Tristana",
+    19: "Warwick",
+    20: "Nunu",
+    21: "MissFortune",
+    22: "Ashe",
+    23: "Tryndamere",
+    24: "Jax",
+    25: "Morgana",
+    26: "Zilean",
+    27: "Singed",
+    28: "Evelynn",
+    29: "Twitch",
+    30: "Karthus",
+    31: "ChoGath",
+    32: "Amumu",
+    33: "Rammus",
+    34: "Anivia",
+    35: "Shaco",
+    36: "DrMundo",
+    37: "Sona",
+    38: "Kassadin",
+    39: "Irelia",
+    40: "Janna",
+    41: "Gangplank",
+    42: "Corki",
+    43: "Karma",
+    44: "Taric",
+    45: "Veigar",
+    48: "Trundle",
+    50: "Swain",
+    51: "Caitlyn",
+    53: "Blitzcrank",
+    54: "Malphite",
+    55: "Katarina",
+    56: "Nocturne",
+    57: "Maokai",
+    58: "Renekton",
+    59: "JarvanIV",
+    60: "Elise",
+    61: "Orianna",
+    62: "Wukong",
+    63: "Brand",
+    64: "LeeSin",
+    67: "Vayne",
+    68: "Rumble",
+    69: "Cassiopeia",
+    72: "Skarner",
+    74: "Heimerdinger",
+    75: "Nasus",
+    76: "Nidalee",
+    77: "Udyr",
+    78: "Poppy",
+    79: "Gragas",
+    80: "Pantheon",
+    81: "Ezreal",
+    82: "Mordekaiser",
+    83: "Yorick",
+    84: "Akali",
+    85: "Kennen",
+    86: "Garen",
+    89: "Leona",
+    90: "Malzahar",
+    91: "Talon",
+    92: "Riven",
+    96: "KogMaw",
+    98: "Shen",
+    99: "Lux",
+    101: "Xerath",
+    102: "Shyvana",
+    103: "Ahri",
+    104: "Graves",
+    105: "Fizz",
+    106: "Volibear",
+    107: "Rengar",
+    110: "Varus",
+    111: "Nautilus",
+    112: "Viktor",
+    113: "Sejuani",
+    114: "Fiora",
+    115: "Ziggs",
+    117: "Lulu",
+    119: "Draven",
+    120: "Hecarim",
+    121: "KhaZix",
+    122: "Darius",
+    126: "Jayce",
+    127: "Lissandra",
+    131: "Diana",
+    133: "Quinn",
+    134: "Syndra",
+    136: "AurelionSol",
+    141: "Kayn",
+    142: "Zoe",
+    143: "Zyra",
+    145: "KaiSa",
+    147: "Seraphine",
+    150: "Gnar",
+    154: "Zac",
+    157: "Yasuo",
+    161: "VelKoz",
+    163: "Taliyah",
+    164: "Camille",
+    166: "Akshan",
+    200: "BelVeth",
+    201: "Braum",
+    202: "Jhin",
+    203: "Kindred",
+    221: "Zeri",
+    222: "Jinx",
+    223: "TahmKench",
+    233: "Briar",
+    234: "Viego",
+    235: "Senna",
+    236: "Lucian",
+    238: "Zed",
+    240: "Kled",
+    245: "Ekko",
+    246: "Qiyana",
+    254: "Vi",
+    266: "Aatrox",
+    267: "Nami",
+    268: "Azir",
+    350: "Yuumi",
+    360: "Samira",
+    412: "Thresh",
+    420: "Illaoi",
+    421: "RekSai",
+    427: "Ivern",
+    429: "Kalista",
+    432: "Bard",
+    497: "Rakan",
+    498: "Xayah",
+    516: "Ornn",
+    517: "Sylas",
+    518: "Neeko",
+    523: "Aphelios",
+    526: "Rell",
+    555: "Pyke",
+    711: "Vex",
+    777: "Yone",
+    799: "Ambessa",
+    800: "Mel",
+    804: "Yunara",
+    875: "Sett",
+    876: "Lillia",
+    887: "Gwen",
+    888: "RenataGlasc",
+    893: "Aurora",
+    895: "Nilah",
+    897: "KSante",
+    901: "Smolder",
+    902: "Milio",
+    910: "Hwei",
+    950: "Naafiri",
+  };
+
+  const spell_data_map: Dictionary<SpellData> = {
+    1: { name: "SummonerBoost", cooldown: 210 }, // Cleanse
+    3: { name: "SummonerExhaust", cooldown: 210 },
+    4: { name: "SummonerFlash", cooldown: 300 },
+    6: { name: "SummonerHaste", cooldown: 240 }, // Ghost
+    7: { name: "SummonerHeal", cooldown: 240 },
+    11: { name: "SummonerSmite", cooldown: 90 }, // Jungle smite
+    12: { name: "SummonerTeleport", cooldown: 360 },
+    13: { name: "SummonerMana", cooldown: 240 }, // Clarity
+    14: { name: "SummonerDot", cooldown: 180 }, // Ignite
+    21: { name: "SummonerBarrier", cooldown: 210 },
+    30: { name: "SummonerPoroRecall", cooldown: 10 },
+    31: { name: "SummonerPoroThrow", cooldown: 20 },
+    32: { name: "SummonerSnowball", cooldown: 80 }, // Mark/Dash (ARAM)
+    39: { name: "SummonerSnowURFSnowball_Mark", cooldown: 40 },
+    54: { name: "Summoner_UltBookPlaceholder", cooldown: 0 },
+    55: { name: "Summoner_UltBookSmitePlaceholder", cooldown: 0 },
+    2201: { name: "SummonerCherryHold", cooldown: 0 },
+    2202: { name: "SummonerCherryFlash", cooldown: 300 },
+  };
+
+  // Mock data for demonstration
+  const mockSummonerSpells = [
+    [4, 14], // Flash, Ignite
+    [4, 7], // Flash, Heal
+    [4, 12], // Flash, Teleport
+    [11, 4], // Smite, Flash
+    [4, 21], // Flash, Barrier
+  ];
+
+  // Mock champion data
+  const mockChampions = ["Ahri", "Yasuo", "Jinx", "Lee Sin", "Lux"];
+
+  const getSpellImageUrl = (spellId: number): string => {
+    const spellData = spell_data_map[spellId];
+    if (!spellData) return "";
+
+    // Mock image URL - replace with your actual image logic
+    return convertFileSrc(`${path}${spell_data_map[spellId]}.png`);
+  };
+
+  const getChampionImageUrl = (championName: string): string => {
+    // Mock image URL - replace with your actual champion image logic
+    return `https://via.placeholder.com/48x48/c2410c/ffffff?text=${championName.slice(
+      0,
+      2
+    )}`;
+  };
+  // This is a placeholder. You need actual paths to your spell images.
+  // Example: `https://ddragon.leagueoflegends.com/cdn/13.24.1/img/spell/${spellId}.png`
+  // Or from your local assets: `/assets/spell_images/${spellId}.png`
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900/20 to-purple-900/20 text-white">
-      {/* Header */}
-      <header className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-800/50 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
-                <Shield className="w-6 h-6" />
-              </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                League Dashboard
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={toggleLiveGame}
-                className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
-                  isLive
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-green-600 hover:bg-green-700"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      isLive ? "bg-white animate-pulse" : "bg-white"
-                    }`}
-                  />
-                  <span>{isLive ? "Live Game" : "Start Game"}</span>
-                </div>
-              </button>
-              <div className="text-sm text-gray-400">
-                {currentTime.toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Summoner Profile */}
-        <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-gray-700/50">
-          <div className="flex items-center space-x-6">
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-3xl font-bold">
-              {mockSummonerData.displayName[0]}
-            </div>
-            <div className="flex-1">
-              <h2 className="text-3xl font-bold text-white mb-2">
-                {mockSummonerData.displayName}
-              </h2>
-              <div className="flex items-center space-x-4 text-gray-300">
-                <span className="flex items-center space-x-1">
-                  <Star className="w-4 h-4" />
-                  <span>Level {mockSummonerData.level}</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <Trophy className="w-4 h-4" />
-                  <span>
-                    {mockSummonerData.rank.tier}{" "}
-                    {mockSummonerData.rank.division}
-                  </span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <Target className="w-4 h-4" />
-                  <span>{mockSummonerData.rank.lp} LP</span>
-                </span>
-              </div>
-              <div className="mt-2 text-sm text-gray-400">
-                Main: {mockSummonerData.mainChampion} • Role:{" "}
-                {mockSummonerData.favoriteRole}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            icon={Trophy}
-            title="Win Rate"
-            value={`${mockSummonerData.winRate}%`}
-            subtitle="Last 20 games"
-            trend={5}
-            color="green"
-          />
-          <StatCard
-            icon={Activity}
-            title="Games Played"
-            value="156"
-            subtitle="This season"
-            trend={12}
-            color="blue"
-          />
-          <StatCard
-            icon={Award}
-            title="Current LP"
-            value={mockSummonerData.rank.lp}
-            subtitle={`${mockSummonerData.rank.tier} ${mockSummonerData.rank.division}`}
-            trend={-3}
-            color="purple"
-          />
-          <StatCard
-            icon={Clock}
-            title="Avg Game Time"
-            value="31:24"
-            subtitle="Recent matches"
-            color="orange"
-            trend={undefined}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Match History */}
-          <div className="lg:col-span-2">
-            <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-white flex items-center space-x-2">
-                  <Activity className="w-5 h-5" />
-                  <span>Recent Matches</span>
-                </h3>
-                <button className="text-blue-400 hover:text-blue-300 text-sm">
-                  View All
-                </button>
-              </div>
-              <div className="space-y-3">
-                {mockMatchHistory.map((match) => (
-                  <MatchHistoryItem key={match.id} match={match} />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Champion Mastery & Quick Stats */}
-          <div className="space-y-6">
-            {/* Champion Mastery */}
-            <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
-                <Star className="w-5 h-5" />
-                <span>Champion Mastery</span>
-              </h3>
-              <div className="space-y-3">
-                {mockChampionMastery.map((champion, index) => (
-                  <ChampionMasteryCard key={index} champion={champion} />
-                ))}
-              </div>
-            </div>
-
-            {/* Live Game Status */}
-            {isLive && (
-              <div className="bg-gradient-to-r from-red-900/50 to-orange-900/50 backdrop-blur-sm rounded-2xl p-6 border border-red-700/50">
-                <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-                  <Zap className="w-5 h-5 text-red-400" />
-                  <span>Live Game</span>
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Game Mode</span>
-                    <span className="text-white font-semibold">
-                      Ranked Solo/Duo
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Champion</span>
-                    <span className="text-white font-semibold">Jinx</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-300">Game Time</span>
-                    <span className="text-white font-semibold animate-pulse">
-                      15:42
-                    </span>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-gray-700">
-                    <div className="w-full bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full animate-pulse"
-                        style={{ width: "65%" }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Performance Score: 8.2/10
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Actions */}
-            <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-              <h3 className="text-xl font-bold text-white mb-4">
-                Quick Actions
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 p-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
-                  <Users className="w-4 h-4" />
-                  <span className="text-sm">Find Match</span>
-                </button>
-                <button className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 p-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
-                  <Target className="w-4 h-4" />
-                  <span className="text-sm">Practice</span>
-                </button>
-                <button className="bg-green-600/20 hover:bg-green-600/30 text-green-400 p-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
-                  <Calendar className="w-4 h-4" />
-                  <span className="text-sm">Schedule</span>
-                </button>
-                <button className="bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 p-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2">
-                  <Award className="w-4 h-4" />
-                  <span className="text-sm">Rewards</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <>
+      <div className="p-4">
+        <button
+          onClick={getData}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Call Rust & Get Spells
+        </button>
+        {/* Displaying raw data for debugging/inspection. Optional. */}
+        {/* Make sure summonerSpells is converted to a string for display */}
+        {/* <pre className="mt-4 whitespace-pre-wrap break-words">
+          {JSON.stringify(summonerSpells, null, 2)}
+        </pre> */}
       </div>
-    </div>
+
+      <p></p>
+
+      {/* Grid for displaying summoner spells */}
+      <div className="grid grid-cols-3 grid-rows-5 gap-1">
+        {summonerSpells.length > 0 ? (
+          summonerSpells.map((spellPair, rowIndex) => (
+            <React.Fragment key={rowIndex}>
+              {/* First column (empty for now) */}
+              <div className="flex items-center justify-end pr-0">
+                <img
+                  src={getSpellImageUrl(spellPair[1])}
+                  className="w-12 h-12 rounded-sm"
+                ></img>
+              </div>
+
+              {/* Second column: Spell 1 - Remove right margin/padding */}
+              <div className="flex items-center justify-end pl-0 pr-0">
+                <img
+                  src={getSpellImageUrl(spellPair[0])}
+                  alt={`Spell ${spellPair[0]}`}
+                  className="w-12 h-12 rounded-sm"
+                />
+              </div>
+
+              {/* Third column: Spell 2 - Remove left margin/padding */}
+              <div className="flex items-center justify-start pl-0">
+                <img
+                  src={getSpellImageUrl(spellPair[1])}
+                  alt={`Spell ${spellPair[1]}`}
+                  className="w-12 h-12 rounded-sm"
+                />
+              </div>
+            </React.Fragment>
+          ))
+        ) : (
+          <div className="col-span-3 text-center p-4">
+            <p>Click "Call Rust" to load summoner spells.</p>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
+
+export default App;

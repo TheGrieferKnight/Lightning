@@ -1,13 +1,12 @@
 use crate::api::lcu;
-use crate::types::response::*;
-use crate::types::{MatchData, Participant};
+use crate::types::{MatchData, PuuidData, Responses};
 use reqwest::{self};
 use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
 
 // Add this function to save PUUID
-pub async fn save_puuid(app: tauri::AppHandle, puuid: String) -> Result<(), String> {
+pub async fn save_puuid(app: &tauri::AppHandle, puuid: &String) -> Result<(), String> {
     let app_data_dir: PathBuf = app
         .path()
         .app_data_dir()
@@ -44,9 +43,12 @@ pub async fn load_puuid(app: &tauri::AppHandle) -> Result<String, String> {
     }
 }
 
-#[tauri::command(rename_all = "snake_case")]
-pub async fn fetch_data(app: tauri::AppHandle, data_to_fetch: &str) -> Result<Responses, String> {
+pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<Responses, String> {
     let api_key = String::from("RGAPI-655f426c-9467-4716-9ef2-abce386c1352");
+    let game_region: String = String::from("euw1");
+    let region: String = String::from("europe");
+    let url: String;
+
     let puuid: String = match load_puuid(&app).await {
         Ok(p) => p,
         Err(e) => {
@@ -54,9 +56,6 @@ pub async fn fetch_data(app: tauri::AppHandle, data_to_fetch: &str) -> Result<Re
             "".to_string()
         }
     };
-    let game_region: String = String::from("euw1");
-    let region: String = String::from("europe");
-    let url: String;
 
     println!("Raw PUUID response: {}", puuid);
 
@@ -79,7 +78,7 @@ pub async fn fetch_data(app: tauri::AppHandle, data_to_fetch: &str) -> Result<Re
                 game_region, puuid
             ));
         }
-        "PUUID" => {
+        "Puuid" => {
             let game_name = lcu::get_game_name_simple().await?;
             let tag_line = lcu::get_tag_line_simple().await?;
 
@@ -143,7 +142,7 @@ pub async fn fetch_data(app: tauri::AppHandle, data_to_fetch: &str) -> Result<Re
 
     // Parse the JSON response into MatchData
     let data = match data_to_fetch {
-        "PUUID" => {
+        "Puuid" => {
             let puuid_data: PuuidData = serde_json::from_str(&response_text).map_err(|e| {
                 format!(
                     "Failed to parse PUUID JSON: {}. Response: {}",
@@ -151,8 +150,17 @@ pub async fn fetch_data(app: tauri::AppHandle, data_to_fetch: &str) -> Result<Re
                 )
             })?;
             println!("{:?}", puuid_data.puuid);
-            save_puuid(app, String::from("Banansanana")).await?;
+            save_puuid(&app, &puuid_data.puuid).await?;
             Responses::Puuid(puuid_data)
+        }
+        "CurrentMatch" => {
+            let match_data: MatchData = serde_json::from_str(&response_text).map_err(|e| {
+                format!(
+                    "Failed to parse MatchData: {}. Response: {}",
+                    e, response_text
+                )
+            })?;
+            Responses::Match(match_data)
         }
         _ => return Err(format!("Unknown data type: {}", data_to_fetch)),
         /*
@@ -165,16 +173,6 @@ pub async fn fetch_data(app: tauri::AppHandle, data_to_fetch: &str) -> Result<Re
                     )
                 })?;
             MatchData::Summoner(summoner_data)
-        }
-        "MATCH" => {
-            let match_data: GameMatchData = serde_json::from_str(&response_text).map_err(|e| {
-                format!(
-                    "Failed to parse Match JSON: {}. Response: {}",
-                    e, response_text
-                )
-            })?;
-
-            MatchData::Match(data)
         }
          */
     };
@@ -203,7 +201,7 @@ async fn fetch_match_data() -> Result<MatchData, String> {
         .header("X-Riot-Token", &api_key)
         .send()
         .await
-        .map_err(|e| format!("Request failed: {}", e))?;
+        .map_err(|e: reqwest::Error| format!("Request failed: {}", e))?;
 
     let status = response.status();
     println!("Response status: {}", status);
@@ -253,68 +251,70 @@ async fn fetch_match_data() -> Result<MatchData, String> {
     Ok(match_data)
 }
 
-pub async fn parse_match_data() -> Result<(), String> {
-    match fetch_match_data().await {
-        Ok(match_data) => {
-            println!("Successfully fetched match data!");
-            println!("Game ID: {}", match_data.game_id);
-            println!("Game Mode: {}", match_data.game_mode);
-            println!("Map ID: {}", match_data.map_id);
-            println!("Number of participants: {}", match_data.participants.len());
+/*
+pub async fn parse_match_data(match_data: MatchData) -> Result<(), String> {
+  match fetch_match_data().await {
+    Ok(match_data) => {
+      println!("Successfully fetched match data!");
+      println!("Game ID: {}", match_data.game_id);
+      println!("Game Mode: {}", match_data.game_mode);
+      println!("Map ID: {}", match_data.map_id);
+      println!("Number of participants: {}", match_data.participants.len());
 
-            // Print all participants
-            println!("\nParticipants:");
-            for (i, participant) in match_data.participants.iter().enumerate() {
-                println!(
-                    "  {}. {} (Champion: {}, Team: {})",
-                    i + 1,
-                    participant.riot_id,
-                    participant.champion_id,
-                    participant.team_id
-                );
-            }
+      // Print all participants
+      println!("\nParticipants:");
+      for (i, participant) in match_data.participants.iter().enumerate() {
+        println!(
+          "  {}. {} (Champion: {}, Team: {})",
+          i + 1,
+          participant.riot_id,
+          participant.champion_id,
+          participant.team_id
+        );
+      }
 
-            // Print banned champions
-            println!("\nBanned Champions:");
-            for ban in &match_data.banned_champions {
-                if ban.champion_id > 0 {
-                    println!(
-                        "  Champion {} banned by team {} (pick turn {})",
-                        ban.champion_id, ban.team_id, ban.pick_turn
-                    );
-                }
-            }
-
-            // Get team information
-            let team_100: Vec<&Participant> = match_data
-                .participants
-                .iter()
-                .filter(|p| p.team_id == 100)
-                .collect();
-
-            let team_200: Vec<&Participant> = match_data
-                .participants
-                .iter()
-                .filter(|p| p.team_id == 200)
-                .collect();
-
-            println!("\nTeam 100 ({} players):", team_100.len());
-            for player in team_100 {
-                println!("  - {}", player.riot_id);
-            }
-
-            println!("\nTeam 200 ({} players):", team_200.len());
-            for player in team_200 {
-                println!("  - {}", player.riot_id);
-            }
+      // Print banned champions
+      println!("\nBanned Champions:");
+      for ban in &match_data.banned_champions {
+        if ban.champion_id > 0 {
+          println!(
+            "  Champion {} banned by team {} (pick turn {})",
+            ban.champion_id, ban.team_id, ban.pick_turn
+          );
         }
-        Err(e) => {
-            eprintln!("Error fetching match data: {}", e);
-        }
-    }
+      }
 
-    Ok(())
+      // Get team information
+      let team_100: Vec<&Participant> = match_data
+      .participants
+      .iter()
+      .filter(|p| p.team_id == 100)
+      .collect();
+
+    let team_200: Vec<&Participant> = match_data
+    .participants
+    .iter()
+    .filter(|p| p.team_id == 200)
+    .collect();
+
+  println!("\nTeam 100 ({} players):", team_100.len());
+  for player in team_100 {
+    println!("  - {}", player.riot_id);
+  }
+
+  println!("\nTeam 200 ({} players):", team_200.len());
+  for player in team_200 {
+    println!("  - {}", player.riot_id);
+  }
 }
+Err(e) => {
+  eprintln!("Error fetching match data: {}", e);
+}
+}
+
+Ok(())
+}
+*/
 
 /*
 async fn get_puuid() -> Result<String, String> {

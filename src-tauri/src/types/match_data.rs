@@ -17,7 +17,7 @@ pub struct MatchData {
     pub game_length: i32,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Participant {
     pub puuid: String,
@@ -32,7 +32,7 @@ pub struct Participant {
     pub perks: Perks,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Perks {
     pub perk_ids: Vec<u32>,

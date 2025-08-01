@@ -25,11 +25,16 @@
         "width": 800,
         "height": 600,
         "resizable": true,
-        "url": "index_copy.html"
+        "url": "index_copy.html",
+        "transparent": true
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": { "allow": ["$APPDATA/**"] }
+      }
     }
   },
   "bundle": {

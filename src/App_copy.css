@@ -13,7 +13,7 @@
   line-height: 24px;
   font-weight: 400;
   color: #f6f6f6;
-  background-color: #2f2f2f;
+  background-color: rgba(0, 0, 0, 0);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -36,6 +36,29 @@
   padding: 1.5em;
   will-change: filter;
   transition: 0.75s;
+}
+
+.image-container {
+  border: 2px solid #3498db; /* A blue border around the div */
+  padding: 10px; /* Space inside the div */
+  margin: 20px; /* Space outside the div */
+  text-align: center; /* Center the image horizontally */
+  width: 300px;
+  background-color: #ecf0f1;
+}
+
+.image-container img {
+  max-width: 100%; /* Make image responsive to its container */
+  height: auto; /* Maintain aspect ratio */
+  display: block; /* Remove extra space below image */
+  border-radius: 8px; /* Slightly rounded corners for the image */
+}
+
+.caption {
+  font-family: sans-serif;
+  font-size: 0.9em;
+  color: #555;
+  margin-top: 10px;
 }
 
 .logo.tauri:hover {
