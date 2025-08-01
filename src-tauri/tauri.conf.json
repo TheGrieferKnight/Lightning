@@ -12,10 +12,20 @@
   "app": {
     "windows": [
       {
-        "title": "Lightning",
+        "label": "main1",
+        "title": "Lightning App",
         "width": 800,
         "height": 600,
-        "resizable": true
+        "resizable": true,
+        "url": "index.html"
+      },
+      {
+        "label": "main2",
+        "title": "Lightning Summoner Spell",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "url": "index_copy.html"
       }
     ],
     "security": {

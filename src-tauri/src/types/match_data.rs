@@ -1,11 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PlayerInfo {
-    pub puuid: String,
-}
-
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MatchData {
@@ -59,6 +54,7 @@ pub struct BannedChampion {
     pub pick_turn: u32,
 }
 
+#[allow(dead_code)]
 impl MatchData {
     /// Check if the game is currently active
     pub fn is_active(&self) -> bool {
