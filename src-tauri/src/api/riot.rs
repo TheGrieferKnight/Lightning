@@ -199,8 +199,8 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
     Ok(data)
 }
 
+/*
 async fn fetch_match_data() -> Result<MatchData, String> {
-    let api_key = String::from("RGAPI-ab4310dd-6e82-4e90-8ae7-804cd71466ec");
     let game_region: String = String::from("euw1");
     let puuid: String = lcu::get_puuid_simple().await?;
 
@@ -269,6 +269,7 @@ async fn fetch_match_data() -> Result<MatchData, String> {
 
     Ok(match_data)
 }
+*/
 
 /*
 pub async fn parse_match_data(match_data: MatchData) -> Result<(), String> {
