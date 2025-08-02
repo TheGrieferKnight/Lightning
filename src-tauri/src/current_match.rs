@@ -16,7 +16,7 @@ pub async fn main(app: tauri::AppHandle) -> Result<Participant, String> {
 
     // Get Match Data
     let match_data_response: Responses = fetch_data(&app, "CurrentMatch").await?;
-    println!("Hello {:?}", match_data_response);
+    println!("Hello {match_data_response:?}");
 
     let match_data = match match_data_response {
         Responses::Match(pq) => pq,
@@ -27,7 +27,7 @@ pub async fn main(app: tauri::AppHandle) -> Result<Participant, String> {
     // ...
     for participant in match_data.participants {
         if participant.puuid == puuid {
-            println!("Haiiiiii {:#?}", participant);
+            println!("{participant:?}");
             return Ok(participant);
         }
     }

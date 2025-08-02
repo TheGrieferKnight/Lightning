@@ -405,8 +405,11 @@ export default function LeagueDashboard() {
                 <span>Champion Mastery</span>
               </h3>
               <div className="space-y-3">
-                {mockChampionMastery.map((champion, index) => (
-                  <ChampionMasteryCard key={index} champion={champion} />
+                {mockChampionMastery.map((champion, _index) => (
+                  <ChampionMasteryCard
+                    key={champion.name}
+                    champion={champion}
+                  />
                 ))}
               </div>
             </div>

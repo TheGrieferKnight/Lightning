@@ -1,13 +1,11 @@
 import "./App_copy.css";
-import { invoke } from "@tauri-apps/api/core";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import React from "react";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 // Define the type aliases outside the component for better organization
 // and to make them available throughout your file if needed.
-type SpellPair = [number, number];
+type SpellPair = [number, number, number];
 type Spells = SpellPair[];
 
 function App() {
@@ -68,7 +66,7 @@ function App() {
 
   // Use useState to manage the summoner_spells data
   const [summonerSpells, setSummonerSpells] = useState<Spells>([]);
-  var [path, setPath] = useState("");
+  const [path, setPath] = useState("");
   // Removed 'result' state as it wasn't being used correctly to display `summoner_spells`
   // and removed the var summoner_spells declaration as it's replaced by state.
 
@@ -83,7 +81,10 @@ function App() {
       // - Update game data
       // - Fetch new information
       // - Check for changes
-      // etc.
+      // etc
+      if (counter % 2 == 0) {
+        console.log("Even");
+      }
     }, 1000);
 
     // Cleanup function - important to prevent memory leaks
@@ -99,7 +100,7 @@ function App() {
       });
       await invoke("mains");
       setPath(
-        application_path.replace(/\//g, "\\").replace("SummonerFlash.png", "")
+        application_path.replace(/\//g, "\\").replace("SummonerFlash.png", ""),
       );
       console.log(path);
       console.log("Received summoner spells:", response);
@@ -126,7 +127,7 @@ function App() {
     [Key: string]: T;
   }
 
-  const champion_data_map: Dictionary<String> = {
+  const champion_data_map: Dictionary<string> = {
     1: "Annie",
     2: "Olaf",
     3: "Galio",
@@ -321,18 +322,6 @@ function App() {
     2202: { name: "SummonerCherryFlash", cooldown: 300 },
   };
 
-  // Mock data for demonstration
-  const mockSummonerSpells = [
-    [4, 14], // Flash, Ignite
-    [4, 7], // Flash, Heal
-    [4, 12], // Flash, Teleport
-    [11, 4], // Smite, Flash
-    [4, 21], // Flash, Barrier
-  ];
-
-  // Mock champion data
-  const mockChampions = ["Ahri", "Yasuo", "Jinx", "Lee Sin", "Lux"];
-
   const getSpellImageUrl = (spellId: number): string => {
     const spellData = spell_data_map[spellId];
     if (!spellData) return "";
@@ -345,7 +334,7 @@ function App() {
     // Mock image URL - replace with your actual champion image logic
     return `https://via.placeholder.com/48x48/c2410c/ffffff?text=${championName.slice(
       0,
-      2
+      2,
     )}`;
   };
   // This is a placeholder. You need actual paths to your spell images.
@@ -374,7 +363,7 @@ function App() {
       <div className="grid grid-cols-3 grid-rows-5 gap-1">
         {summonerSpells.length > 0 ? (
           summonerSpells.map((spellPair, rowIndex) => (
-            <React.Fragment key={rowIndex}>
+            <React.Fragment key={"Spell Row " + rowIndex}>
               {/* First column (empty for now) */}
               <div className="flex items-center justify-end pr-0">
                 <img

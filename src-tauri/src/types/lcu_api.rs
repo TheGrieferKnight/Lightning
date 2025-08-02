@@ -25,7 +25,7 @@ impl From<io::Error> for LockfileError {
 
 impl From<ParseIntError> for LockfileError {
     fn from(err: ParseIntError) -> Self {
-        LockfileError::Parse(format!("Failed to parse number: {}", err))
+        LockfileError::Parse(format!("Failed to parse number: {err}"))
     }
 }
 
@@ -45,10 +45,10 @@ impl From<serde_json::Error> for LockfileError {
 impl std::fmt::Display for LockfileError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LockfileError::Io(err) => write!(f, "IO error: {}", err),
-            LockfileError::Parse(msg) => write!(f, "Parse error: {}", msg),
-            LockfileError::Request(err) => write!(f, "Request error: {}", err),
-            LockfileError::Json(err) => write!(f, "JSON error: {}", err),
+            LockfileError::Io(err) => write!(f, "IO error: {err}"),
+            LockfileError::Parse(msg) => write!(f, "Parse error: {msg}"),
+            LockfileError::Request(err) => write!(f, "Request error: {err}"),
+            LockfileError::Json(err) => write!(f, "JSON error: {err}"),
         }
     }
 }
@@ -59,7 +59,7 @@ impl std::error::Error for LockfileError {}
 // Implement Into<String> for LockfileError
 impl Into<std::string::String> for LockfileError {
     fn into(self) -> String {
-        format!("{}", self)
+        format!("{self}")
     }
 }
 
@@ -182,7 +182,7 @@ impl LeagueApiClient {
             .await?;
 
         let status = response.status();
-        println!("Response status: {}", status);
+        println!("Response status: {status}");
 
         if !status.is_success() {
             let error_text = response
@@ -191,15 +191,12 @@ impl LeagueApiClient {
                 .unwrap_or_else(|_| "Failed to read error response".to_string());
 
             return Err(LockfileError::Parse(match status.as_u16() {
-                401 => format!(
-                    "Unauthorized - Check your credentials. Error: {}",
-                    error_text
-                ),
-                403 => format!("Forbidden - Invalid permissions. Error: {}", error_text),
-                404 => format!("Not found - Endpoint may not exist. Error: {}", error_text),
-                429 => format!("Rate limit exceeded. Error: {}", error_text),
-                500..=599 => format!("LCU API server error ({}). Error: {}", status, error_text),
-                _ => format!("HTTP error {}: {}", status, error_text),
+                401 => format!("Unauthorized - Check your credentials. Error: {error_text}"),
+                403 => format!("Forbidden - Invalid permissions. Error: {error_text}"),
+                404 => format!("Not found - Endpoint may not exist. Error: {error_text}"),
+                429 => format!("Rate limit exceeded. Error: {error_text}"),
+                500..=599 => format!("LCU API server error ({status}). Error: {error_text}"),
+                _ => format!("HTTP error {status}: {error_text}"),
             }));
         }
 

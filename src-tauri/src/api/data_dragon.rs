@@ -10,26 +10,23 @@ async fn download_image(
     filename: &str,
     subfolder: &str,
 ) -> Result<(), String> {
-    let full_url = format!("{}{}", url, filename);
+    let full_url = format!("{url}{filename}");
     let response = reqwest::get(full_url)
         .await
-        .map_err(|e| format!("Failed: {}", e))?;
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|e| format!("Failed: {}", e))?;
+        .map_err(|e| format!("Failed: {e}"))?;
+    let bytes = response.bytes().await.map_err(|e| format!("Failed: {e}"))?;
 
     let app_data_dir: PathBuf = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("Failed to save PUUID: {}", e))?;
+        .map_err(|e| format!("Failed to save PUUID: {e}"))?;
 
-    let full_path = app_data_dir.join(format!("assets/{}/{}", subfolder, filename));
+    let full_path = app_data_dir.join(format!("assets/{subfolder}/{filename}"));
 
     let mut file = File::create(full_path).await.unwrap();
     file.write_all(&bytes).await.unwrap();
 
-    println!("Downloaded image: {}", filename);
+    println!("Downloaded image: {filename}");
     Ok(())
 }
 
@@ -38,7 +35,7 @@ pub async fn get_image_path(app: tauri::AppHandle, name: &str) -> Result<String,
     let app_data_dir: PathBuf = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("Failed to save PUUID: {}", e))?;
+        .map_err(|e| format!("Failed to save PUUID: {e}"))?;
 
     let full_path = format!(
         "{}/assets/summoner_spells/{}.png",
