@@ -24,13 +24,13 @@ pub async fn save_puuid(app: &tauri::AppHandle, puuid: &String) -> Result<(), St
 }
 
 // Add this function to load PUUID
-pub async fn load_puuid(app: &tauri::AppHandle) -> Result<String, String> {
+pub async fn load_file(app: &tauri::AppHandle, filename: &str) -> Result<String, String> {
     let app_data_dir = app
         .path()
         .app_data_dir()
         .map_err(|e| format!("Failed to load PUUID: {}", e))?;
 
-    let puuid_file = app_data_dir.join("puuid.txt");
+    let puuid_file = app_data_dir.join(filename);
 
     println!("Loading Puuid from {:?}", puuid_file);
 
@@ -43,11 +43,30 @@ pub async fn load_puuid(app: &tauri::AppHandle) -> Result<String, String> {
     }
 }
 
+pub async fn load_puuid(app: &tauri::AppHandle) -> Result<String, String> {
+    return load_file(app, "puuid.txt").await;
+}
+
+fn read_lines(filename: &str) -> Vec<String> {
+    let mut result = Vec::new();
+
+    for line in fs::read_to_string(filename).unwrap().lines() {
+        result.push(line.to_string())
+    }
+
+    result
+}
+fn get_api_key() -> Vec<String> {
+    return read_lines("api_key");
+}
+
 pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<Responses, String> {
-    let api_key = String::from("RGAPI-655f426c-9467-4716-9ef2-abce386c1352");
+    let api_key = load_file(app, "api_key.txt").await?;
     let game_region: String = String::from("euw1");
     let region: String = String::from("europe");
     let url: String;
+
+    println!("{:?}", api_key);
 
     let puuid: String = match load_puuid(&app).await {
         Ok(p) => p,

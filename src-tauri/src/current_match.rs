@@ -36,7 +36,7 @@ pub async fn main(app: tauri::AppHandle) -> Result<Participant, String> {
 }
 
 #[tauri::command]
-pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32)>, String> {
+pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32, u32)>, String> {
     let puuid = load_puuid(&app).await?;
 
     let match_data_response: Responses = fetch_data(&app, "CurrentMatch").await?;
