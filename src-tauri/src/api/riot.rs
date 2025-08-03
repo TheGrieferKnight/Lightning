@@ -10,15 +10,15 @@ pub async fn save_puuid(app: &tauri::AppHandle, puuid: &String) -> Result<(), St
     let app_data_dir: PathBuf = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("Failed to save PUUID: {}", e))?;
+        .map_err(|e| format!("Failed to save PUUID: {e}"))?;
 
-    println!("Saving {:?}", app_data_dir);
+    println!("Saving {app_data_dir:?}");
     // Create directory if it doesn't exist
     fs::create_dir_all(&app_data_dir)
-        .map_err(|e| format!("Failed to create app data directory: {}", e))?;
+        .map_err(|e| format!("Failed to create app data directory: {e}"))?;
 
     let puuid_file = app_data_dir.join("puuid.txt");
-    fs::write(puuid_file, puuid).map_err(|e| format!("Failed to write PUUID: {}", e))?;
+    fs::write(puuid_file, puuid).map_err(|e| format!("Failed to write PUUID: {e}"))?;
 
     Ok(())
 }
@@ -28,15 +28,15 @@ pub async fn load_file(app: &tauri::AppHandle, filename: &str) -> Result<String,
     let app_data_dir = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("Failed to load PUUID: {}", e))?;
+        .map_err(|e| format!("Failed to load PUUID: {e}"))?;
 
     let puuid_file = app_data_dir.join(filename);
 
-    println!("Loading Puuid from {:?}", puuid_file);
+    println!("Loading Puuid from {puuid_file:?}");
 
     if puuid_file.exists() {
         println!("File loaded");
-        fs::read_to_string(puuid_file).map_err(|e| format!("Failed to read PUUID: {}", e))
+        fs::read_to_string(puuid_file).map_err(|e| format!("Failed to read PUUID: {e}"))
     } else {
         println!("File not loaded");
         Err("PUUID file not found".to_string())
@@ -47,64 +47,47 @@ pub async fn load_puuid(app: &tauri::AppHandle) -> Result<String, String> {
     return load_file(app, "puuid.txt").await;
 }
 
-fn read_lines(filename: &str) -> Vec<String> {
-    let mut result = Vec::new();
-
-    for line in fs::read_to_string(filename).unwrap().lines() {
-        result.push(line.to_string())
-    }
-
-    result
-}
-fn get_api_key() -> Vec<String> {
-    return read_lines("api_key");
-}
-
 pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<Responses, String> {
     let api_key = load_file(app, "api_key.txt").await?;
     let game_region: String = String::from("euw1");
     let region: String = String::from("europe");
     let url: String;
 
-    println!("{:?}", api_key);
+    println!("{api_key:?}");
 
-    let puuid: String = match load_puuid(&app).await {
+    let puuid: String = match load_puuid(app).await {
         Ok(p) => p,
         Err(e) => {
-            eprintln!("Failed to load puuid: {}", e);
+            eprintln!("Failed to load puuid: {e}");
             "".to_string()
         }
     };
 
-    println!("Raw PUUID response: {}", puuid);
+    println!("Raw PUUID response: {puuid}");
 
     match data_to_fetch {
         "CurrentMatch" => {
-            url = String::from(format!(
-                "https://{}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{}",
-                game_region, puuid
-            ));
+            url = format!(
+                "https://{game_region}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}"
+            );
         }
         "MatchHistory" => {
-            url = String::from(format!(
-                "https://{}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{}",
-                game_region, puuid
-            ));
+            url = format!(
+                "https://{game_region}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}"
+            );
         }
         "Mastery" => {
-            url= String::from(format!(
-                "https://{}.api.riotgames.com//lol/champion-mastery/v4/champion-masteries/by-puuid/{}/top",
-                game_region, puuid
-            ));
+            url= format!(
+                "https://{game_region}.api.riotgames.com//lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}/top"
+            );
         }
         "Puuid" => {
             let game_name = lcu::get_game_name_simple().await?;
             let tag_line = lcu::get_tag_line_simple().await?;
 
-            url = String::from(format!(
-                "https://{}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{}/{}",
-                region, game_name, tag_line
-            ));
+            url = format!(
+                "https://{region}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
+            );
         }
         _ => {
             url = String::from("String");
@@ -113,17 +96,17 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
 
     let client = reqwest::Client::new();
 
-    println!("Making request to: {}", url);
+    println!("Making request to: {url}");
 
     let response = client
         .get(&url)
         .header("X-Riot-Token", &api_key)
         .send()
         .await
-        .map_err(|e| format!("Request failed: {}", e))?;
+        .map_err(|e| format!("Request failed: {e}"))?;
 
     let status = response.status();
-    println!("Response status: {}", status);
+    println!("Response status: {status}");
 
     // Check if the response is successful
     if !status.is_success() {
@@ -133,18 +116,12 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
             .unwrap_or_else(|_| "Failed to read error response".to_string());
 
         return Err(match status.as_u16() {
-            401 => format!("Unauthorized - Check your API key. Error: {}", error_text),
-            403 => format!(
-                "Forbidden - API key may be expired or invalid. Error: {}",
-                error_text
-            ),
-            404 => format!(
-                "Player not found or not currently in game. Error: {}",
-                error_text
-            ),
-            429 => format!("Rate limit exceeded. Error: {}", error_text),
-            500..=599 => format!("Riot API server error ({}). Error: {}", status, error_text),
-            _ => format!("HTTP error {}: {}", status, error_text),
+            401 => format!("Unauthorized - Check your API key. Error: {error_text}"),
+            403 => format!("Forbidden - API key may be expired or invalid. Error: {error_text}"),
+            404 => format!("Player not found or not currently in game. Error: {error_text}"),
+            429 => format!("Rate limit exceeded. Error: {error_text}"),
+            500..=599 => format!("Riot API server error ({status}). Error: {error_text}"),
+            _ => format!("HTTP error {error_text}: {status}"),
         });
     }
 

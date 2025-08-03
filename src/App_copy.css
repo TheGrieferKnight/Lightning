@@ -4,6 +4,42 @@
   filter: drop-shadow(0 0 2em #747bff);
 }
 
+/* Add to your App_copy.css or main CSS file */
+
+/* Hide scrollbars for webkit browsers */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbars for Firefox */
+html {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -webkit-context-menu: none;
+  -moz-context-menu: none;
+  -o-context-menu: none;
+  context-menu: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Remove any default margins/padding */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevents any scrolling */
+  height: 100vh;
+  width: 100vw;
+}
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafb);
 }
