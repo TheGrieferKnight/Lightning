@@ -20,11 +20,19 @@
         "url": "index.html"
       },
       {
-        "label": "main2",
+        "label": "SumSpellOverlay",
+        "resizable": false,
         "title": "Lightning Summoner Spell",
-        "width": 800,
-        "height": 600,
-        "resizable": true,
+        "width": 160,
+        "height": 268,
+        "center": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": false,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": false,
+        "shadow": true,
         "url": "index_copy.html",
         "transparent": true
       }

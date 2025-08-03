@@ -1,7 +1,8 @@
 import "./App_copy.css";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import "@tauri-apps/api/window";
+import { getAllWindows, PhysicalPosition } from "@tauri-apps/api/window";
 
 // Define the type aliases outside the component for better organization
 // and to make them available throughout your file if needed.
@@ -12,13 +13,14 @@ function App() {
   // Define interfaces if they are used elsewhere.
   // If only used within this component, they can stay here,
   // but often it's cleaner to put them in a separate types.ts file.
-  interface PuuidData {
-    puuid: string;
-    game_name: string;
-    tag_line: string;
-  }
+  // interface PuuidData {
+  //   puuid: string;
+  //   game_name: string;
+  //   tag_line: string;
+  // }
 
   interface MatchData {
+    type: string;
     gameId: number;
     mapId: number;
     gameMode: string;
@@ -62,33 +64,67 @@ function App() {
   }
 
   // Type for the possible responses from `mains` command if you uncomment it later
-  type Responses = { Puuid: PuuidData } | { Match: MatchData };
+  // type Responses = { Puuid: PuuidData } | { Match: MatchData };
 
   // Use useState to manage the summoner_spells data
   const [summonerSpells, setSummonerSpells] = useState<Spells>([]);
   const [path, setPath] = useState("");
+  const [_matchData, setMatchData] = useState<MatchData | null>(null);
   // Removed 'result' state as it wasn't being used correctly to display `summoner_spells`
   // and removed the var summoner_spells declaration as it's replaced by state.
 
-  const [counter, setCounter] = useState(0);
+  const [_counter, setCounter] = useState(0);
+  const [activeCooldowns, setActiveCooldowns] = useState<{
+    [key: string]: number;
+  }>({});
+
+  const moveWindow = async () => {
+    let windows = await getAllWindows();
+    for (let i = 0; i < windows.length; i++) {
+      if (windows[i].label == "SumSpellOverlay") {
+        let window = windows[i];
+        let position = new PhysicalPosition(1920 - 175, 1080 / 2 - 268 / 2);
+        window.setPosition(position);
+        console.log(window);
+      }
+    }
+  };
 
   useEffect(() => {
-    // This runs every 1000ms (1 second)
-    const interval = setInterval(async () => {
-      console.log("Main loop tick!");
-      setCounter((prev) => prev + 1);
-      // Do your main loop work here:
-      // - Update game data
-      // - Fetch new information
-      // - Check for changes
-      // etc
-      if (counter % 2 == 0) {
-        console.log("Even");
-      }
+    // Initial data fetch
+    getData();
+    moveWindow();
+    // Cooldown timer - runs every second
+    const cooldownInterval = setInterval(() => {
+      setActiveCooldowns((prev) => {
+        const updated = { ...prev };
+        let hasChanges = false;
+
+        Object.keys(updated).forEach((key) => {
+          if (updated[key] > 0) {
+            updated[key] -= 1;
+            hasChanges = true;
+          } else if (updated[key] === 0) {
+            delete updated[key];
+            hasChanges = true;
+          }
+        });
+
+        return hasChanges ? updated : prev;
+      });
     }, 1000);
 
-    // Cleanup function - important to prevent memory leaks
-    return () => clearInterval(interval);
+    // Data refresh timer - runs every 5 seconds
+    const dataRefreshInterval = setInterval(async () => {
+      console.log("Auto-refreshing data...");
+      setCounter((prev) => prev + 1);
+      await getData();
+    }, 5000);
+
+    return () => {
+      clearInterval(cooldownInterval);
+      clearInterval(dataRefreshInterval);
+    };
   }, []);
 
   const getData = async () => {
@@ -98,25 +134,38 @@ function App() {
       const application_path: string = await invoke("get_image_path", {
         name: "SummonerFlash",
       });
-      await invoke("mains");
+      const matchResponse: MatchData = await invoke("get_match_data");
+
+      if (
+        matchResponse &&
+        typeof matchResponse === "object" &&
+        "Match" in matchResponse
+      ) {
+        setMatchData(matchResponse);
+      }
+      console.log(matchResponse);
+
+      // console.log(matchResponse.Match);
+      // await invoke("mains");
+
       setPath(
-        application_path.replace(/\//g, "\\").replace("SummonerFlash.png", ""),
+        application_path
+          .replace(/\//g, "\\")
+          .replace("summoner_spells\\SummonerFlash.png", "")
       );
+
       console.log(path);
       console.log("Received summoner spells:", response);
-      // Update the state with the received data
       setSummonerSpells(response);
     } catch (error) {
       console.error("Error fetching summoner spells:", error);
     }
   };
 
-  // Helper function to generate image URLs based on spell IDs
-  // You'll need to replace this with your actual image URL logic
-  interface ChampionData {
-    key: number;
-    name: string;
-  }
+  // interface ChampionData {
+  //   key: number;
+  //   name: string;
+  // }
 
   interface SpellData {
     name: string;
@@ -323,81 +372,167 @@ function App() {
   };
 
   const getSpellImageUrl = (spellId: number): string => {
+    console.log(spellId);
+    let spellName = spell_data_map[spellId].name;
+    if (!spellName) return "";
+    console.log(spellName);
+    let subfolder: string = "summoner_spells\\";
+
+    return convertFileSrc(`${path}\\${subfolder}${spellName}.png`);
+  };
+
+  const getChampionImageUrl = (championId: number): string => {
+    let championName = champion_data_map[championId];
+    if (!championName) return "";
+
+    let subfolder: string = "champion_square\\";
+
+    return convertFileSrc(`${path}\\${subfolder}${championName}.png`);
+  };
+
+  const handleSpellClick = (
+    spellId: number,
+    participantIndex: number,
+    spellPosition: string
+  ) => {
+    const cooldownKey = `${participantIndex}-${spellPosition}`;
     const spellData = spell_data_map[spellId];
-    if (!spellData) return "";
 
-    // Mock image URL - replace with your actual image logic
-    return convertFileSrc(`${path}${spell_data_map[spellId]}.png`);
+    if (spellData && spellData.cooldown > 0) {
+      setActiveCooldowns((prev) => ({
+        ...prev,
+        [cooldownKey]: spellData.cooldown,
+      }));
+
+      console.log(
+        `Started cooldown for ${spellData.name}: ${spellData.cooldown}s`
+      );
+    }
   };
 
-  const getChampionImageUrl = (championName: string): string => {
-    // Mock image URL - replace with your actual champion image logic
-    return `https://via.placeholder.com/48x48/c2410c/ffffff?text=${championName.slice(
-      0,
-      2,
-    )}`;
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
+
+  const handleChampionDoubleClick = (rowIndex: number) => {
+    if (selectedRowIndex === null) {
+      setSelectedRowIndex(rowIndex);
+    } else {
+      if (selectedRowIndex !== rowIndex) {
+        setSummonerSpells((prev) => {
+          const newSpells = [...prev];
+          [newSpells[selectedRowIndex], newSpells[rowIndex]] = [
+            newSpells[rowIndex],
+            newSpells[selectedRowIndex],
+          ];
+          return newSpells;
+        });
+      }
+      setSelectedRowIndex(null);
+    }
   };
-  // This is a placeholder. You need actual paths to your spell images.
-  // Example: `https://ddragon.leagueoflegends.com/cdn/13.24.1/img/spell/${spellId}.png`
-  // Or from your local assets: `/assets/spell_images/${spellId}.png`
+
+  const SpellImage = ({
+    spellId,
+    participantIndex,
+    spellPosition,
+    justifyClass,
+  }: {
+    spellId: number;
+    participantIndex: number;
+    spellPosition: string;
+    justifyClass: string;
+  }) => {
+    const cooldownKey = `${participantIndex}-${spellPosition}`;
+    const remainingCooldown = activeCooldowns[cooldownKey] || 0;
+    const maxCooldown = spell_data_map[spellId]?.cooldown || 0;
+    const cooldownPercent =
+      maxCooldown > 0 ? (remainingCooldown / maxCooldown) * 100 : 0;
+
+    return (
+      <div className={`flex items-center ${justifyClass}`}>
+        <div className="relative">
+          <img
+            src={getSpellImageUrl(spellId)}
+            alt={`Spell ${spellId}`}
+            className={`w-[8vh] h-[8vh] min-w-[40px] min-h-[40px] max-w-[80px] max-h-[80px] rounded-sm cursor-pointer transition-all duration-200 object-cover block ${
+              remainingCooldown > 0
+                ? "opacity-60 grayscale"
+                : "hover:opacity-80 hover:scale-105"
+            }`}
+            onClick={() =>
+              handleSpellClick(spellId, participantIndex, spellPosition)
+            }
+          />
+
+          {/* Cooldown Overlay */}
+          {remainingCooldown > 0 && (
+            <div
+              className="absolute inset-0 bg-black bg-opacity-60 rounded-sm flex items-center justify-center transition-all duration-1000"
+              style={{
+                background: `conic-gradient(from 0deg, rgba(0,0,0,0.8) ${cooldownPercent}%, transparent ${cooldownPercent}%)`,
+              }}
+            >
+              <span className="text-white text-xs font-bold">
+                {remainingCooldown}
+              </span>
+            </div>
+          )}
+
+          {/* Ready indicator */}
+          {remainingCooldown === 0 && maxCooldown > 0 && (
+            <div className="absolute -top-1 -right-1 w-[1.5vh] h-[1.5vh] min-w-[8px] min-h-[8px] max-w-[15px] max-h-[15px] bg-green-500 rounded-full border border-white"></div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <>
-      <div className="p-4">
-        <button
-          onClick={getData}
-          className="px-4 py-2 bg-blue-500 text-white rounded"
-        >
-          Call Rust & Get Spells
-        </button>
-        {/* Displaying raw data for debugging/inspection. Optional. */}
-        {/* Make sure summonerSpells is converted to a string for display */}
-        {/* <pre className="mt-4 whitespace-pre-wrap break-words">
-          {JSON.stringify(summonerSpells, null, 2)}
-        </pre> */}
+    <div className="h-screen w-screen flex flex-col overflow-hidden">
+      {/* Grid for displaying summoner spells with champion icons */}
+      <div className="flex-1 p-2 overflow-hidden">
+        <div className="grid grid-cols-3 gap-1 h-full max-h-full w-full">
+          {summonerSpells.length > 0 ? (
+            summonerSpells.map((spellPair, rowIndex) => {
+              return (
+                <React.Fragment key={rowIndex}>
+                  {/* Champion Icon */}
+                  <div className="flex items-center justify-center">
+                    <img
+                      src={getChampionImageUrl(spellPair[0] || 0)}
+                      alt={`Champion ${spellPair[0]} || "Unknown"}`}
+                      className={`w-[8vh] h-[8vh] min-w-[40px] min-h-[40px] max-w-[80px] max-h-[80px] rounded-sm object-cover block border-2 cursor-pointer transition-all duration-200 ${
+                        selectedRowIndex === rowIndex
+                          ? "border-blue-500 ring-2 ring-blue-400"
+                          : "border-yellow-400 hover:scale-105"
+                      }`}
+                      onDoubleClick={() => handleChampionDoubleClick(rowIndex)}
+                    />
+                  </div>
+
+                  {/* Spell 1 */}
+                  <SpellImage
+                    spellId={spellPair[1]}
+                    participantIndex={rowIndex}
+                    spellPosition="first"
+                    justifyClass="justify-center"
+                  />
+
+                  {/* Spell 2 */}
+                  <SpellImage
+                    spellId={spellPair[2]}
+                    participantIndex={rowIndex}
+                    spellPosition="second"
+                    justifyClass="justify-center"
+                  />
+                </React.Fragment>
+              );
+            })
+          ) : (
+            <div className="col-span-3 flex items-center justify-center h-full"></div>
+          )}
+        </div>
       </div>
-
-      <p></p>
-
-      {/* Grid for displaying summoner spells */}
-      <div className="grid grid-cols-3 grid-rows-5 gap-1">
-        {summonerSpells.length > 0 ? (
-          summonerSpells.map((spellPair, rowIndex) => (
-            <React.Fragment key={"Spell Row " + rowIndex}>
-              {/* First column (empty for now) */}
-              <div className="flex items-center justify-end pr-0">
-                <img
-                  src={getSpellImageUrl(spellPair[1])}
-                  className="w-12 h-12 rounded-sm"
-                ></img>
-              </div>
-
-              {/* Second column: Spell 1 - Remove right margin/padding */}
-              <div className="flex items-center justify-end pl-0 pr-0">
-                <img
-                  src={getSpellImageUrl(spellPair[0])}
-                  alt={`Spell ${spellPair[0]}`}
-                  className="w-12 h-12 rounded-sm"
-                />
-              </div>
-
-              {/* Third column: Spell 2 - Remove left margin/padding */}
-              <div className="flex items-center justify-start pl-0">
-                <img
-                  src={getSpellImageUrl(spellPair[1])}
-                  alt={`Spell ${spellPair[1]}`}
-                  className="w-12 h-12 rounded-sm"
-                />
-              </div>
-            </React.Fragment>
-          ))
-        ) : (
-          <div className="col-span-3 text-center p-4">
-            <p>Click "Call Rust" to load summoner spells.</p>
-          </div>
-        )}
-      </div>
-    </>
+    </div>
   );
 }
 

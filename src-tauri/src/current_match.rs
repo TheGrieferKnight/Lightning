@@ -36,6 +36,12 @@ pub async fn main(app: tauri::AppHandle) -> Result<Participant, String> {
 }
 
 #[tauri::command]
+pub async fn get_match_data(app: tauri::AppHandle) -> Result<Responses, String> {
+    let current_match_data = fetch_data(&app, "CurrentMatch").await?;
+    Ok(current_match_data)
+}
+
+#[tauri::command]
 pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32, u32)>, String> {
     let puuid = load_puuid(&app).await?;
 
@@ -60,9 +66,9 @@ pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32,
     for participant in &match_data.participants {
         if participant.team_id == team_id {
             spell_ids.push((
+                participant.champion_id,
                 participant.spell1_id,
                 participant.spell2_id,
-                participant.champion_id,
             ));
         }
     }
