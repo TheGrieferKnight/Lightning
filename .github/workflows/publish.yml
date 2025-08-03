@@ -40,23 +40,42 @@ jobs:
       - name: install frontend dependencies
         run: npm ci --force
         
-      - uses: tauri-apps/tauri-action@v0
-        id: tauri_build
+      - name: build tauri app (no release)
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Lightning ${{ github.ref_name }}'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: false
+          # Don't create release automatically
+          tagName: ''
+          releaseName: ''
+          releaseBody: ''
+          releaseDraft: true
           prerelease: false
           
-      - uses: actions/upload-artifact@v4
+      - name: Upload Windows installer
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
         with:
-          name: artifacts-${{ matrix.platform }}
+          name: windows-msi
+          path: src-tauri/target/release/bundle/msi/*.msi
+          retention-days: 1
+          
+      - name: Upload Linux installers
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installers
           path: |
-            src-tauri/target/release/bundle/
-            !src-tauri/target/release/bundle/**/.*
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/appimage/*.AppImage
+          retention-days: 1
+          
+      - name: Upload macOS installer
+        if: matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: src-tauri/target/release/bundle/dmg/*.dmg
           retention-days: 1
           
   publish:
@@ -65,18 +84,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - uses: actions/download-artifact@v4
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          merge-multiple: true
+          name: windows-msi
+          path: ./release-assets/
           
-      - name: Display downloaded artifacts
-        run: ls -la artifacts/
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-installers
+          path: ./release-assets/
+          
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-dmg
+          path: ./release-assets/
+          
+      - name: Display release assets
+        run: ls -la ./release-assets/
         
-      - name: 'create release'
+      - name: Create release with essential files only
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.ref_name }}
+          name: 'Lightning ${{ github.ref_name }}'
+          body: |
+            ## Installation
+            
+            **Windows**: Download and run the `.msi` file
+            **Linux**: Download the `.deb` file for Debian/Ubuntu or the `.AppImage` for universal Linux
+            **macOS**: Download and install the `.dmg` file
+            
+            ## What's Changed
+            See the commits for detailed changes.
           draft: false
-          files: artifacts/**/*
-          generate_release_notes: true
+          prerelease: false
+          files: ./release-assets/*
           token: ${{ secrets.GITHUB_TOKEN }}
