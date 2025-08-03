@@ -36,8 +36,7 @@
         "shadow": true,
         "url": "index_copy.html",
         "transparent": true,
-        "skipTaskbar": true,
-        "parent": "main1"
+        "skipTaskbar": true
       }
     ],
     "security": {
