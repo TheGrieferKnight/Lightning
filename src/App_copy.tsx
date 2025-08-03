@@ -94,6 +94,14 @@ function App() {
     // Initial data fetch
     getData();
     moveWindow();
+
+    const handleContextMenu = (e: any) => {
+      e.preventDefault();
+      return false;
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu);
+
     // Cooldown timer - runs every second
     const cooldownInterval = setInterval(() => {
       setActiveCooldowns((prev) => {
@@ -122,6 +130,7 @@ function App() {
     }, 5000);
 
     return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
       clearInterval(cooldownInterval);
       clearInterval(dataRefreshInterval);
     };
@@ -151,7 +160,7 @@ function App() {
       setPath(
         application_path
           .replace(/\//g, "\\")
-          .replace("summoner_spells\\SummonerFlash.png", "")
+          .replace("summoner_spells\\SummonerFlash.png", ""),
       );
 
       console.log(path);
@@ -393,7 +402,7 @@ function App() {
   const handleSpellClick = (
     spellId: number,
     participantIndex: number,
-    spellPosition: string
+    spellPosition: string,
   ) => {
     const cooldownKey = `${participantIndex}-${spellPosition}`;
     const spellData = spell_data_map[spellId];
@@ -405,7 +414,7 @@ function App() {
       }));
 
       console.log(
-        `Started cooldown for ${spellData.name}: ${spellData.cooldown}s`
+        `Started cooldown for ${spellData.name}: ${spellData.cooldown}s`,
       );
     }
   };
