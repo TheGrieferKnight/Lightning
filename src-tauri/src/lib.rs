@@ -26,6 +26,7 @@ pub fn run() {
         })
         */
         .plugin(tauri_plugin_opener::init())
+        */
         .invoke_handler(tauri::generate_handler![
             get_match_data,
             mains,
