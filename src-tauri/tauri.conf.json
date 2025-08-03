@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Lightning",
+  "version": "0.1.3-alpha",
+  "identifier": "com.lightning.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main1",
+        "title": "Lightning App",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "url": "index.html",
+        "devtools": false
+      },
+      {
+        "label": "SumSpellOverlay",
+        "resizable": false,
+        "title": "Lightning Summoner Spell",
+        "width": 160,
+        "height": 268,
+        "center": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": false,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": false,
+        "shadow": true,
+        "url": "index_copy.html",
+        "transparent": true,
+        "skipTaskbar": true
+      }
+    ],
+    "security": {
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": { "allow": ["$APPDATA/**"] }
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
