@@ -43,8 +43,6 @@ pub async fn get_match_data(app: tauri::AppHandle) -> Result<Responses, String> 
 
 #[tauri::command]
 pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32, u32)>, String> {
-    let puuid = load_puuid(&app).await?;
-
     let match_data_response: Responses = fetch_data(&app, "CurrentMatch").await?;
     // println!("Hello {:?}", match_data_response);
 
@@ -53,11 +51,18 @@ pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32,
         _ => return Err(String::from("Expected match data")),
     };
 
-    let mut team_id: u32 = 100;
+    let mut team_id = 100;
 
     for participant in &match_data.participants {
-        if participant.puuid == puuid {
+        /*
+        let riot_id = &participant.riot_id;
+        let teami_d = participant.team_id;
+        println!("{riot_id} {teami_d}");
+        */
+        if participant.puuid == "sada" {
             team_id = participant.team_id;
+        } else {
+            team_id = 100;
         }
     }
 

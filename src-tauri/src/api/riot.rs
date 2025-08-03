@@ -1,6 +1,7 @@
 use crate::api::lcu;
 use crate::types::{MatchData, PuuidData, Responses};
 use reqwest::{self};
+use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
@@ -47,50 +48,105 @@ pub async fn load_puuid(app: &tauri::AppHandle) -> Result<String, String> {
     return load_file(app, "puuid.txt").await;
 }
 
+async fn fetch_puuid(app: &tauri::AppHandle) -> Result<String, String> {
+    let url: String =
+        String::from("https://riot-api-proxy-lightnings-projects-ba45f9d4.vercel.app/api/riot");
+    let region: String = String::from("europe"); // Or wherever your account region is
+
+    let game_name = lcu::get_game_name_simple().await?;
+    let tag_line = lcu::get_tag_line_simple().await?;
+
+    let endpoint = format!("/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}");
+
+    let payload = serde_json::json!({
+        "endpoint": endpoint,
+        "region": region
+    });
+
+    let client = reqwest::Client::new();
+    let response = client
+        .post(&url)
+        .header(
+            "x-vercel-protection-bypass",
+            "4gSz0EXtXJyTt7cxfCCH46mlH24t1J6l",
+        )
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| format!("Request failed: {e}"))?;
+
+    let status = response.status();
+    if !status.is_success() {
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Failed to read error response".to_string());
+        return Err(format!("PUUID fetch error {}: {}", status, error_text));
+    }
+
+    let response_text = response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read PUUID response: {}", e))?;
+
+    let puuid_data: PuuidData = serde_json::from_str(&response_text).map_err(|e| {
+        format!(
+            "Failed to parse PUUID JSON: {}. Response: {}",
+            e, response_text
+        )
+    })?;
+
+    save_puuid(app, &puuid_data.puuid).await?; // Save the fetched PUUID
+    Ok(puuid_data.puuid)
+}
+
 pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<Responses, String> {
-    let api_key = load_file(app, "api_key.txt").await?;
     let game_region: String = String::from("euw1");
     let region: String = String::from("europe");
-    let url: String;
+    let url: String =
+        String::from("https://riot-api-proxy-lightnings-projects-ba45f9d4.vercel.app/api/riot");
 
-    println!("{api_key:?}");
-
-    let puuid: String = match load_puuid(app).await {
-        Ok(p) => p,
-        Err(e) => {
-            eprintln!("Failed to load puuid: {e}");
-            "".to_string()
-        }
-    };
+    let puuid: String = fetch_puuid(&app).await?;
 
     println!("Raw PUUID response: {puuid}");
 
+    let payload;
+
     match data_to_fetch {
         "CurrentMatch" => {
-            url = format!(
-                "https://{game_region}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}"
-            );
+            let endpoint = format!("/lol/spectator/v5/active-games/by-summoner/{puuid}");
+            payload = serde_json::json!({
+                "endpoint": endpoint,
+                "region": game_region
+            });
         }
         "MatchHistory" => {
-            url = format!(
-                "https://{game_region}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}"
-            );
+            let endpoint = format!("/lol/spectator/v5/active-games/by-summoner/{puuid}");
+            payload = serde_json::json!({
+                "endpoint":  endpoint,
+                "region": game_region
+            });
         }
         "Mastery" => {
-            url= format!(
-                "https://{game_region}.api.riotgames.com//lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}/top"
-            );
+            let endpoint =
+                format!("/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}/top");
+            payload = serde_json::json!({
+                "endpoint": endpoint,
+                "region": game_region
+            });
         }
         "Puuid" => {
             let game_name = lcu::get_game_name_simple().await?;
             let tag_line = lcu::get_tag_line_simple().await?;
-
-            url = format!(
-                "https://{region}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
-            );
+            let endpoint = format!("/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}");
+            payload = serde_json::json!({
+                "endpoint": endpoint,
+                "region": region
+            });
         }
         _ => {
-            url = String::from("String");
+            let endpoint = format!("/lol/spectator/v5/active-games/by-summoner/{puuid}");
+            payload = serde_json::json!({"endpoint": endpoint, "region":game_region});
         }
     }
 
@@ -99,13 +155,18 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
     println!("Making request to: {url}");
 
     let response = client
-        .get(&url)
-        .header("X-Riot-Token", &api_key)
+        .post(&url)
+        .header(
+            "x-vercel-protection-bypass",
+            "4gSz0EXtXJyTt7cxfCCH46mlH24t1J6l",
+        )
+        .json(&payload)
         .send()
         .await
         .map_err(|e| format!("Request failed: {e}"))?;
 
     let status = response.status();
+
     println!("Response status: {status}");
 
     // Check if the response is successful
@@ -130,11 +191,14 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
         .await
         .map_err(|e| format!("Failed to read response: {}", e))?;
 
+    /*
+
     println!("Response body length: {} characters", response_text.len());
     println!(
-        "First 200 characters of response: {}",
-        &response_text.chars().take(200).collect::<String>()
+      "First 200 characters of response: {}",
+      &response_text.chars().take(200).collect::<String>()
     );
+    */
 
     // Parse the JSON response into MatchData
     let data = match data_to_fetch {
