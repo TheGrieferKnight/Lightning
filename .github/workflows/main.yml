@@ -2,7 +2,7 @@ name: 'publish'
 
 on:
   push:
-    branches: [ "release" ]
+    branches: [ "master" ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
