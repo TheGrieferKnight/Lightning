@@ -13,11 +13,11 @@
     "windows": [
       {
         "label": "main1",
-        "title": "Lightning App",
+        "title": "Lightning Dashboard",
         "width": 800,
         "height": 600,
         "resizable": true,
-        "url": "index.html",
+        "url": "LightningDashboard.html",
         "devtools": false
       },
       {
@@ -29,12 +29,11 @@
         "center": true,
         "decorations": false,
         "alwaysOnTop": true,
-        "skipTaskbar": false,
         "maximizable": false,
         "minimizable": false,
         "closable": false,
         "shadow": true,
-        "url": "index_copy.html",
+        "url": "SummonerSpellTracker.html",
         "transparent": true,
         "skipTaskbar": true
       }

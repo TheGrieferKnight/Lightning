@@ -4,8 +4,6 @@
   filter: drop-shadow(0 0 2em #747bff);
 }
 
-/* Add to your App_copy.css or main CSS file */
-
 /* Hide scrollbars for webkit browsers */
 ::-webkit-scrollbar {
   display: none;
@@ -74,19 +72,19 @@ body,
 }
 
 .image-container {
-  border: 2px solid #3498db; /* A blue border around the div */
-  padding: 10px; /* Space inside the div */
-  margin: 20px; /* Space outside the div */
-  text-align: center; /* Center the image horizontally */
+  border: 2px solid #3498db;
+  padding: 10px;
+  margin: 20px;
+  text-align: center;
   width: 300px;
   background-color: #ecf0f1;
 }
 
 .image-container img {
-  max-width: 100%; /* Make image responsive to its container */
-  height: auto; /* Maintain aspect ratio */
-  display: block; /* Remove extra space below image */
-  border-radius: 8px; /* Slightly rounded corners for the image */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
 }
 
 .caption {

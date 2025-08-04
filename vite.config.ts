@@ -40,8 +40,8 @@ export default defineConfig(async () => ({
   build: {
     rollupOptions: {
       input: {
-        main: "./index.html",
-        secondary: "./index_copy.html",
+        main: "./LightningDashboard.html",
+        secondary: "./SummonerSpellTracker.html",
       },
     },
   },

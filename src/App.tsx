@@ -1,5 +1,5 @@
-// Full fixed file with types/interfaces added
-import "./App.css";
+// Full file with types/interfaces added
+import "./styles/App.css";
 import { useState, useEffect } from "react";
 import {
   Trophy,
