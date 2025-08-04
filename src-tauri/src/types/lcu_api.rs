@@ -53,13 +53,12 @@ impl std::fmt::Display for LockfileError {
     }
 }
 
-// Implement std::error::Error trait
 impl std::error::Error for LockfileError {}
 
-// Implement Into<String> for LockfileError
-impl Into<std::string::String> for LockfileError {
-    fn into(self) -> String {
-        format!("{self}")
+// Implement From<String> for LockfileError
+impl From<LockfileError> for String {
+    fn from(error: LockfileError) -> String {
+        format!("{error}")
     }
 }
 
@@ -75,7 +74,6 @@ pub struct CurrentSummoner {
     pub profile_icon_id: i32,
     pub game_name: String,
     pub tag_line: String,
-    // Add other fields as needed
 }
 
 pub struct Lockfile {
@@ -143,13 +141,11 @@ impl Lockfile {
         Ok(client)
     }
 
-    // Get the authorization header value
     fn get_auth_header(&self) -> String {
         let credentials = format!("riot:{}", self.password);
         format!("Basic {}", general_purpose::STANDARD.encode(credentials))
     }
 
-    // Get the base URL for API requests
     pub fn get_base_url(&self) -> String {
         format!("https://127.0.0.1:{}", self.api_port)
     }
@@ -204,11 +200,6 @@ impl LeagueApiClient {
         let current_summoner: CurrentSummoner = serde_json::from_str(&response_text)?;
 
         Ok(current_summoner)
-    }
-
-    pub async fn get_puuid(&self) -> Result<String, LockfileError> {
-        let summoner = self.get_current_summoner().await?;
-        Ok(summoner.puuid)
     }
 
     pub async fn get_game_name(&self) -> Result<String, LockfileError> {

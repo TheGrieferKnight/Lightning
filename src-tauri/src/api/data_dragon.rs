@@ -46,7 +46,7 @@ pub async fn get_image_path(app: tauri::AppHandle, name: &str) -> Result<String,
 }
 
 #[tauri::command]
-pub async fn mains(app: tauri::AppHandle) {
+pub async fn download_necessary_files(app: tauri::AppHandle) {
     let url = "https://ddragon.leagueoflegends.com/cdn/15.15.1/img/spell/";
     let filenames = [
         "SummonerBarrier.png",

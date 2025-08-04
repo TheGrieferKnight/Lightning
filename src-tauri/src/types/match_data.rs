@@ -28,7 +28,7 @@ pub struct Participant {
     pub profile_icon_id: u32,
     pub riot_id: String,
     pub bot: bool,
-    pub game_customization_objects: Vec<Value>, // Using Value for unknown pub structure
+    pub game_customization_objects: Vec<Value>,
     pub perks: Perks,
 }
 
@@ -54,7 +54,6 @@ pub struct BannedChampion {
     pub pick_turn: u32,
 }
 
-#[allow(dead_code)]
 impl MatchData {
     /// Check if the game is currently active
     pub fn is_active(&self) -> bool {

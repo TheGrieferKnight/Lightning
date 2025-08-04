@@ -1,4 +1,4 @@
-use crate::types::MatchData;
+use crate::types::match_data::MatchData;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
