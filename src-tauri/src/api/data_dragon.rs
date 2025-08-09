@@ -1,54 +1,77 @@
-use reqwest::{self};
+use reqwest;
 use std::path::PathBuf;
 use tauri::Manager;
-use tokio::fs::File;
+use tokio::fs::{self, File};
 use tokio::io::AsyncWriteExt;
 
-async fn download_image(
+/// Downloads an image from Data Dragon and saves it to the app's data directory.
+pub async fn download_image(
     app: &tauri::AppHandle,
     url: &str,
     filename: &str,
     subfolder: &str,
 ) -> Result<(), String> {
-    let full_url = format!("{url}{filename}");
-    let response = reqwest::get(full_url)
+    let full_url = format!("{url}{filename}.png");
+    let response = reqwest::get(&full_url)
         .await
-        .map_err(|e| format!("Failed: {e}"))?;
-    let bytes = response.bytes().await.map_err(|e| format!("Failed: {e}"))?;
+        .map_err(|e| format!("Failed to fetch image: {e}"))?;
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read image bytes: {e}"))?;
 
     let app_data_dir: PathBuf = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("Failed to save PUUID: {e}"))?;
+        .map_err(|e| format!("Failed to get app data dir: {e}"))?;
 
-    let full_path = app_data_dir.join(format!("assets/{subfolder}/{filename}"));
+    let full_path = app_data_dir.join(format!("assets/{subfolder}/{filename}.png"));
+    println!("{full_path:?}");
+    if let Some(parent) = full_path.parent() {
+        fs::create_dir_all(parent)
+            .await
+            .map_err(|e| format!("Failed to create directory: {e}"))?;
+    }
 
-    let mut file = File::create(full_path).await.unwrap();
-    file.write_all(&bytes).await.unwrap();
+    let mut file = File::create(&full_path)
+        .await
+        .map_err(|e| format!("Failed to create file: {e}"))?;
+    file.write_all(&bytes)
+        .await
+        .map_err(|e| format!("Failed to write file: {e}"))?;
 
     println!("Downloaded image: {filename}");
     Ok(())
 }
 
+/// Returns the local path to a summoner spell image.
 #[tauri::command]
-pub async fn get_image_path(app: tauri::AppHandle, name: &str) -> Result<String, String> {
+pub async fn get_image_path(
+    app: tauri::AppHandle,
+    subfolder: &str,
+    name: &str,
+) -> Result<String, String> {
     let app_data_dir: PathBuf = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("Failed to save PUUID: {e}"))?;
+        .map_err(|e| format!("Failed to get app data dir: {e}"))?;
 
-    let full_path = format!(
-        "{}/assets/summoner_spells/{}.png",
-        app_data_dir.into_os_string().into_string().unwrap(),
+    Ok(format!(
+        "{}/assets/{}/{}.png",
+        app_data_dir
+            .into_os_string()
+            .into_string()
+            .unwrap_or_default(),
+        subfolder,
         name
-    );
-    Ok(full_path)
+    ))
 }
 
+/// Downloads all necessary static assets from Data Dragon.
 #[tauri::command]
 pub async fn download_necessary_files(app: tauri::AppHandle) {
-    let url = "https://ddragon.leagueoflegends.com/cdn/15.15.1/img/spell/";
-    let filenames = [
+    let spell_url = "https://ddragon.leagueoflegends.com/cdn/15.15.1/img/spell/";
+    let spell_files = [
         "SummonerBarrier.png",
         "SummonerBoost.png",
         "SummonerCherryFlash.png",
@@ -68,187 +91,15 @@ pub async fn download_necessary_files(app: tauri::AppHandle) {
         "Summoner_UltBookPlaceholder.png",
         "Summoner_UltBookSmitePlaceholder.png",
     ];
-    let subfolder: &str = "summoner_spells";
-    for filename in filenames {
-        let _ = download_image(&app, url, filename, subfolder).await;
+
+    for filename in spell_files {
+        let _ = download_image(&app, spell_url, filename, "summoner_spells").await;
     }
 
-    let url = "https://ddragon.leagueoflegends.com/cdn/15.15.1/img/champion/";
-    let filenames = [
-        "Annie.png",
-        "Olaf.png",
-        "Galio.png",
-        "TwistedFate.png",
-        "XinZhao.png",
-        "Urgot.png",
-        "LeBlanc.png",
-        "Vladimir.png",
-        "Fiddlesticks.png",
-        "Kayle.png",
-        "MasterYi.png",
-        "Alistar.png",
-        "Ryze.png",
-        "Sion.png",
-        "Sivir.png",
-        "Soraka.png",
-        "Teemo.png",
-        "Tristana.png",
-        "Warwick.png",
-        "Nunu.png",
-        "MissFortune.png",
-        "Ashe.png",
-        "Tryndamere.png",
-        "Jax.png",
-        "Morgana.png",
-        "Zilean.png",
-        "Singed.png",
-        "Evelynn.png",
-        "Twitch.png",
-        "Karthus.png",
-        "ChoGath.png",
-        "Amumu.png",
-        "Rammus.png",
-        "Anivia.png",
-        "Shaco.png",
-        "DrMundo.png",
-        "Sona.png",
-        "Kassadin.png",
-        "Irelia.png",
-        "Janna.png",
-        "Gangplank.png",
-        "Corki.png",
-        "Karma.png",
-        "Taric.png",
-        "Veigar.png",
-        "Trundle.png",
-        "Swain.png",
-        "Caitlyn.png",
-        "Blitzcrank.png",
-        "Malphite.png",
-        "Katarina.png",
-        "Nocturne.png",
-        "Maokai.png",
-        "Renekton.png",
-        "JarvanIV.png",
-        "Elise.png",
-        "Orianna.png",
-        "Wukong.png",
-        "Brand.png",
-        "LeeSin.png",
-        "Vayne.png",
-        "Rumble.png",
-        "Cassiopeia.png",
-        "Skarner.png",
-        "Heimerdinger.png",
-        "Nasus.png",
-        "Nidalee.png",
-        "Udyr.png",
-        "Poppy.png",
-        "Gragas.png",
-        "Pantheon.png",
-        "Ezreal.png",
-        "Mordekaiser.png",
-        "Yorick.png",
-        "Akali.png",
-        "Kennen.png",
-        "Garen.png",
-        "Leona.png",
-        "Malzahar.png",
-        "Talon.png",
-        "Riven.png",
-        "KogMaw.png",
-        "Shen.png",
-        "Lux.png",
-        "Xerath.png",
-        "Shyvana.png",
-        "Ahri.png",
-        "Graves.png",
-        "Fizz.png",
-        "Volibear.png",
-        "Rengar.png",
-        "Varus.png",
-        "Nautilus.png",
-        "Viktor.png",
-        "Sejuani.png",
-        "Fiora.png",
-        "Ziggs.png",
-        "Lulu.png",
-        "Draven.png",
-        "Hecarim.png",
-        "KhaZix.png",
-        "Darius.png",
-        "Jayce.png",
-        "Lissandra.png",
-        "Diana.png",
-        "Quinn.png",
-        "Syndra.png",
-        "AurelionSol.png",
-        "Kayn.png",
-        "Zoe.png",
-        "Zyra.png",
-        "KaiSa.png",
-        "Seraphine.png",
-        "Gnar.png",
-        "Zac.png",
-        "Yasuo.png",
-        "VelKoz.png",
-        "Taliyah.png",
-        "Camille.png",
-        "Akshan.png",
-        "BelVeth.png",
-        "Braum.png",
-        "Jhin.png",
-        "Kindred.png",
-        "Zeri.png",
-        "Jinx.png",
-        "TahmKench.png",
-        "Briar.png",
-        "Viego.png",
-        "Senna.png",
-        "Lucian.png",
-        "Zed.png",
-        "Kled.png",
-        "Ekko.png",
-        "Qiyana.png",
-        "Vi.png",
-        "Aatrox.png",
-        "Nami.png",
-        "Azir.png",
-        "Yuumi.png",
-        "Samira.png",
-        "Thresh.png",
-        "Illaoi.png",
-        "RekSai.png",
-        "Ivern.png",
-        "Kalista.png",
-        "Bard.png",
-        "Rakan.png",
-        "Xayah.png",
-        "Ornn.png",
-        "Sylas.png",
-        "Neeko.png",
-        "Aphelios.png",
-        "Rell.png",
-        "Pyke.png",
-        "Vex.png",
-        "Yone.png",
-        "Ambessa.png",
-        "Mel.png",
-        "Yunara.png",
-        "Sett.png",
-        "Lillia.png",
-        "Gwen.png",
-        "RenataGlasc.png",
-        "Aurora.png",
-        "Nilah.png",
-        "KSante.png",
-        "Smolder.png",
-        "Milio.png",
-        "Hwei.png",
-        "Naafiri.png",
-    ];
-    let subfolder: &str = "champion_square";
-    for filename in filenames {
-        let _ = download_image(&app, url, filename, subfolder).await;
+    let champ_url = "https://ddragon.leagueoflegends.com/cdn/15.15.1/img/champion/";
+    let champ_files = include!("champion_list.rs"); // Move champion list to a separate file for cleanliness
+
+    for filename in champ_files {
+        let _ = download_image(&app, champ_url, filename, "champion_squares").await;
     }
 }

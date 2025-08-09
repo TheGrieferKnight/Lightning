@@ -1,9 +1,8 @@
 // src/components/StatCard.tsx
-
-import React from 'react';
-import { TrendingUp } from 'lucide-react';
-import { StatCardProps } from '../types/dashboard';
-import { getColorClasses } from '../utils/dashboardUtils';
+import React from "react";
+import { TrendingUp } from "lucide-react";
+import { StatCardProps } from "../types/dashboard";
+import { getColorClasses, cardBase, hoverScale } from "../utils/dashboardUtils";
 
 export const StatCard: React.FC<StatCardProps> = ({
   icon: Icon,
@@ -16,7 +15,9 @@ export const StatCard: React.FC<StatCardProps> = ({
   const colorClasses = getColorClasses(color);
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:transform hover:scale-105">
+    <div
+      className={`${cardBase} rounded-xl p-6 border border-neutral-800/60 ${hoverScale}`}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${colorClasses.bg}`}>
           <Icon className={`w-6 h-6 ${colorClasses.icon}`} />
@@ -34,8 +35,8 @@ export const StatCard: React.FC<StatCardProps> = ({
         )}
       </div>
       <h3 className="text-2xl font-bold text-white mb-1">{value}</h3>
-      <p className="text-sm text-gray-400">{title}</p>
-      {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+      <p className="text-sm text-cyan-300">{title}</p>
+      {subtitle && <p className="text-xs text-cyan-300/80 mt-1">{subtitle}</p>}
     </div>
   );
 };

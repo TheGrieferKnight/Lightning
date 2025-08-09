@@ -1,39 +1,7 @@
-// src/hooks/useDashboardData.ts
-
-import { useState, useEffect } from 'react';
-import { DashboardData } from '../types/dashboard';
-import { mockDashboardData } from '../data/mockData';
-
-// API service functions TODO: replace with actual API calls
-const apiService = {
-  //TODO: Replace with actual API endpoint
-  async fetchSummonerData(summonerName: string) {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return mockDashboardData.summoner;
-  },
-
-  async fetchMatchHistory(puuid: string, count: number = 5) {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return mockDashboardData.matches;
-  },
-
-  async fetchChampionMastery(puuid: string) {
-    await new Promise(resolve => setTimeout(resolve, 600));
-    return mockDashboardData.championMastery;
-  },
-
-  async fetchLiveGame(summonerName: string) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // Return null if no live game, or live game data
-    return Math.random() > 0.5 ? mockDashboardData.liveGame : null;
-  },
-
-  async fetchStats(puuid: string) {
-    await new Promise(resolve => setTimeout(resolve, 400));
-    return mockDashboardData.stats;
-  }
-};
+import { invoke } from "@tauri-apps/api/core";
+import { useState, useEffect } from "react";
+import { DashboardData } from "../types/dashboard";
+import { mockDashboardData } from "../data/mockData";
 
 export const useDashboardData = (summonerName?: string) => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -41,54 +9,40 @@ export const useDashboardData = (summonerName?: string) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchAllData = async () => {
-    if (!summonerName) {
-      // Use mock data when no summoner name provided
-      setData(mockDashboardData);
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch all data in parallel
-      const [summoner, matches, championMastery, liveGame, stats] = await Promise.all([
-        apiService.fetchSummonerData(summonerName),
-        apiService.fetchMatchHistory('mock-puuid'), //TODO: Replace with actual puuid
-        apiService.fetchChampionMastery('mock-puuid'),
-        apiService.fetchLiveGame(summonerName),
-        apiService.fetchStats('mock-puuid')
-      ]);
-
-      setData({
-        summoner,
-        matches,
-        championMastery,
-        liveGame,
-        stats
+      
+      let name = summonerName;
+      if (!name) {
+        // Ask backend for current player
+        const player = await invoke<string>("get_current_summoner");
+        name = player;
+        console.log(name);
+      }
+      
+      if (!name) {
+        throw new Error("No summoner name available");
+      }
+      
+      const dashboardData = await invoke<DashboardData>("get_dashboard_data", {
+        summonerName: name,
       });
+      console.log(dashboardData);
+      setData(dashboardData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch data');
-      // Fallback to mock data on error
-      setData(mockDashboardData);
+      setError(err instanceof Error ? err.message : "Failed to fetch data");
+      console.log(err);
+      setData(mockDashboardData); // fallback
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAllData();
+  useEffect(()  => {
+    fetchAllData(); 
   }, [summonerName]);
 
-  const refetch = () => {
-    fetchAllData();
-  };
-
-  return {
-    data,
-    loading,
-    error,
-    refetch
-  };
+  return { data, loading, error, refetch: fetchAllData };
 };

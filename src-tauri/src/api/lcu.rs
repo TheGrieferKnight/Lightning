@@ -1,6 +1,4 @@
-use crate::types::lcu_api::{LeagueApiClient, LockfileError};
-
-// Example usage
+use crate::api::lcu_api::{LeagueApiClient, LockfileError};
 
 pub async fn main() -> Result<(), LockfileError> {
     println!("Initializing League API client...");

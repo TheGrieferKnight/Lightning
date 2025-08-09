@@ -1,7 +1,7 @@
 // src/components/ChampionIcon.tsx
 
-import React from 'react';
-import { getChampionImageUrl } from '../utils/imageUtils';
+import React from "react";
+import { getChampionImageUrl } from "../utils/imageUtils";
 
 interface ChampionIconProps {
   championId: number;

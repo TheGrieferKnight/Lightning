@@ -6,6 +6,14 @@ use serde::{Deserialize, Serialize};
 pub enum Responses {
     Puuid(PuuidData),
     Match(MatchData),
+    SummonerName(SummonerNameData),
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SummonerNameData {
+    pub game_name: String,
+    pub tag_line: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

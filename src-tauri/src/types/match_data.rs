@@ -49,23 +49,20 @@ pub struct Observers {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BannedChampion {
-    pub champion_id: i32, // -1 for no ban
+    pub champion_id: i32,
     pub team_id: u32,
     pub pick_turn: u32,
 }
 
 impl MatchData {
-    /// Check if the game is currently active
     pub fn is_active(&self) -> bool {
-        self.game_length < 0 // Negative game length means game is still in progress
+        self.game_length < 0
     }
 
-    /// Get participant by PUUID
     pub fn find_participant_by_puuid(&self, puuid: &str) -> Option<&Participant> {
         self.participants.iter().find(|p| p.puuid == puuid)
     }
 
-    /// Get enemy team participants for a given player
     pub fn get_enemy_team(&self, player_puuid: &str) -> Vec<&Participant> {
         if let Some(player) = self.find_participant_by_puuid(player_puuid) {
             let enemy_team_id = if player.team_id == 100 { 200 } else { 100 };
