@@ -6,6 +6,7 @@ export const mockSummonerData: SummonerData = {
   displayName: "RiftMaster2024",
   level: 87,
   profileIconId: 4371,
+  profileIconPath: "",
   rank: { tier: "GOLD", division: "II", lp: 64 },
   winRate: 73,
   recentGames: 15,
@@ -90,4 +91,5 @@ export const mockDashboardData: DashboardData = {
     totalGames: 156,
     avgGameTime: "31:24",
   },
+  imagePath: "",
 };

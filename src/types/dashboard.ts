@@ -1,4 +1,35 @@
 // src/types/dashboard.ts
+import { LucideIcon } from "lucide-react";
+
+export interface ChampionMastery {
+  icon: React.ReactNode; // Can be an <img> or an icon component
+  name: string;
+  level: number;
+  points: number;
+}
+
+export interface ChampionMasteryCardProps {
+  champion: ChampionMastery;
+}
+
+export interface StatCardProps {
+  icon: LucideIcon; // Icon component from lucide-react
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  trend?: number; // Positive or negative percentage
+  color?: ColorType; // Defaults to "blue"
+}
+
+export type ColorType =
+  | "blue"
+  | "green"
+  | "red"
+  | "yellow"
+  | "purple"
+  | "pink"
+  | "indigo"
+  | "orange";
 
 export interface MatchHistoryItemProps {
   match: Match;
@@ -32,13 +63,6 @@ export interface Match {
   gameMode: string; // e.g., "Ranked Solo"
   timestamp: string; // e.g., "2 hours ago"
   cs: number; // creep score
-}
-
-export interface ChampionMastery {
-  name: string;
-  level: number; // mastery level (1-7)
-  points: number; // mastery points
-  icon: string; // could be emoji or URL
 }
 
 export interface LiveGameData {

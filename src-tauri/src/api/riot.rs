@@ -61,6 +61,12 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
     let puuid = fetch_puuid(app).await?;
     let payload;
 
+    /*
+    puuid = String::from(
+        "sWa0-CXDSMK9arBkxHP-AN-dh4vSiJkmnO_SF0NuPYtI5NvLNm6mvl1OOC6AO8VcBe7SDKJmOUJtjw",
+    );
+    */
+
     match data_to_fetch {
         "CurrentMatch" => {
             let endpoint = format!("/lol/spectator/v5/active-games/by-summoner/{puuid}");

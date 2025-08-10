@@ -1,9 +1,9 @@
 // src/hooks/useGameData.ts
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getAllWindows, PhysicalPosition } from "@tauri-apps/api/window";
-import { Spells, MatchData } from '../types';
+import { Spells, MatchData } from "../types";
 
 export const useGameData = () => {
   const [summonerSpells, setSummonerSpells] = useState<Spells>([]);
@@ -25,6 +25,7 @@ export const useGameData = () => {
     try {
       const response: Spells = await invoke("get_summoner_spells");
       const applicationPath: string = await invoke("get_image_path", {
+        subfolder: "summoner_spells",
         name: "SummonerFlash",
       });
       const matchResponse: MatchData = await invoke("get_match_data");
@@ -63,12 +64,12 @@ export const useGameData = () => {
 
     document.addEventListener("contextmenu", handleContextMenu);
 
-    // Data refresh timer - runs every 5 seconds
+    // Data refresh timer - runs every 15 seconds
     const dataRefreshInterval = setInterval(async () => {
       console.log("Auto-refreshing data...");
       setCounter((prev) => prev + 1);
       await getData();
-    }, 5000);
+    }, 15000);
 
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);

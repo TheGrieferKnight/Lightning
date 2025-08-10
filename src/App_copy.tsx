@@ -1,7 +1,7 @@
 // src/App_copy.tsx
 
 import "./styles/App_copy.css";
-import React, { useState } from "react";
+import { useState } from "react";
 import { SpellGrid } from "./components/SpellGrid";
 import { useGameData } from "./hooks/useGameData";
 import { useCooldowns } from "./hooks/useCooldowns";

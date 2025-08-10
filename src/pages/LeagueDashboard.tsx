@@ -8,7 +8,6 @@ import { StatCard } from "../components/StatCard";
 import { MatchHistoryItem } from "../components/MatchHistoryItem";
 import { ChampionMasteryCard } from "../components/ChampionMasteryCard";
 import { LiveGameStatus } from "../components/LiveGameStatus";
-import { QuickActions } from "../components/QuickActions";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { formatTime, sectionBase } from "../utils/dashboardUtils";
 
@@ -24,13 +23,6 @@ export default function LeagueDashboard() {
   }, []);
 
   const toggleLiveGame = () => setIsLive((prev) => !prev);
-
-  const handleQuickActions = {
-    onFindMatch: () => console.log("Find Match clicked"),
-    onPractice: () => console.log("Practice clicked"),
-    onSchedule: () => console.log("Schedule clicked"),
-    onRewards: () => console.log("Rewards clicked"),
-  };
 
   if (loading) {
     return (
