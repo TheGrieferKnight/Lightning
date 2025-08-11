@@ -33,6 +33,7 @@ export const getMatchChampionImageUrl = (
   championName: string,
   path: string,
 ): string => {
+  console.log(path);
   const subfolder = "assets\\champion_squares\\";
 
   return convertFileSrc(`${path}\\${subfolder}${championName}.png`);

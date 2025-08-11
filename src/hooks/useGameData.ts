@@ -1,15 +1,17 @@
 // src/hooks/useGameData.ts
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getAllWindows, PhysicalPosition } from "@tauri-apps/api/window";
 import { Spells, MatchData } from "../types";
 
 export const useGameData = () => {
   const [summonerSpells, setSummonerSpells] = useState<Spells>([]);
-  const [path, setPath] = useState("");
+  // const [path, setPath] = useState("");
   const [matchData, setMatchData] = useState<MatchData | null>(null);
   const [counter, setCounter] = useState(0);
+
+  const pathRef = useRef("");
 
   const moveWindow = async () => {
     const windows = await getAllWindows();
@@ -23,12 +25,22 @@ export const useGameData = () => {
 
   const getData = async () => {
     try {
-      const response: Spells = await invoke("get_summoner_spells");
+
       const applicationPath: string = await invoke("get_image_path", {
         subfolder: "summoner_spells",
         name: "SummonerFlash",
       });
+
+      const updatedPath = applicationPath.replace(/\//g, "\\").replace("summoner_spells\\SummonerFlash.png", "");
+
+      pathRef.current = updatedPath;
+      // setPath(updatedPath);
+
+      console.log(updatedPath);
+
+      const response: Spells = await invoke("get_summoner_spells");
       const matchResponse: MatchData = await invoke("get_match_data");
+
 
       if (
         matchResponse &&
@@ -39,11 +51,6 @@ export const useGameData = () => {
       }
       console.log(matchResponse);
 
-      setPath(
-        applicationPath
-          .replace(/\//g, "\\")
-          .replace("summoner_spells\\SummonerFlash.png", ""),
-      );
 
       console.log("Received summoner spells:", response);
       setSummonerSpells(response);
@@ -80,7 +87,7 @@ export const useGameData = () => {
   return {
     summonerSpells,
     setSummonerSpells,
-    path,
+    path: pathRef.current,
     matchData,
     counter,
   };

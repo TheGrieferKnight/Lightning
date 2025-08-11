@@ -3,7 +3,7 @@ use crate::api::riot::{fetch_data, fetch_puuid};
 use crate::types::{match_data::Participant, response::Responses};
 
 #[tauri::command]
-pub async fn get_current_summoner(app: tauri::AppHandle) -> Result<String, String> {
+pub async fn get_current_summoner(_app: tauri::AppHandle) -> Result<String, String> {
     let game_name = get_game_name_simple().await?;
     let tag_line = get_tag_line_simple().await?;
     let summoner_name = format!("{game_name}#{tag_line}");

@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useState, useEffect } from "react";
 import { DashboardData } from "../types/dashboard";
 import { mockDashboardData } from "../data/mockData";
+import { getDb } from "./useDatabase";
 
 export const useDashboardData = (summonerName?: string) => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -9,10 +10,13 @@ export const useDashboardData = (summonerName?: string) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchAllData = async () => {
+    
     try {
       setLoading(true);
       setError(null);
 
+      console.log("trying to get DB");
+      // const db = await getDb();
       
       let name = summonerName;
       if (!name) {
@@ -25,6 +29,8 @@ export const useDashboardData = (summonerName?: string) => {
       if (!name) {
         throw new Error("No summoner name available");
       }
+      console.log("trying to write into DB");
+      // await db.execute("INSERT INTO users (name) VALUES ($1)", [name]);
       
       const dashboardData = await invoke<DashboardData>("get_dashboard_data", {
         summonerName: name,

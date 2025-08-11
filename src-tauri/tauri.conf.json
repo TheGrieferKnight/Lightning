@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "label": "main1",
+        "label": "LightningDashboard",
         "title": "Lightning Dashboard",
         "width": 800,
         "height": 600,
@@ -58,5 +58,12 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "sql": {
+      "default": {
+        "url": "sqlite:$APPDATA/app.db"
+      }
+    }
   }
 }

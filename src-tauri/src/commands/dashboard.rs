@@ -1,83 +1,13 @@
 use crate::api::data_dragon::{download_image, get_image_path};
 use crate::api::riot::{fetch_data, fetch_puuid};
 use crate::data::champion_data_map; // We'll add this for ID->Name mapping
+use crate::types::data_objects::{InfoDto, MatchDto, ParticipantDto};
 use crate::types::response::Responses;
 use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::Manager;
-
-// ---------- DTOs (only the fields we need) ----------
-
-#[derive(Debug, Deserialize)]
-pub struct MatchDto {
-    pub metadata: MetadataDto,
-    pub info: InfoDto,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct MetadataDto {
-    #[serde(rename = "dataVersion")]
-    pub data_version: Option<String>,
-    #[serde(rename = "matchId")]
-    pub match_id: String,
-    pub participants: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct InfoDto {
-    #[serde(rename = "endOfGameResult")]
-    pub end_of_game_result: Option<String>,
-    #[serde(rename = "gameCreation")]
-    pub game_creation: Option<i64>,
-    #[serde(rename = "gameDuration")]
-    pub game_duration: Option<i64>,
-    #[serde(rename = "gameEndTimestamp")]
-    pub game_end_timestamp: Option<i64>,
-    #[serde(rename = "gameId")]
-    pub game_id: Option<i64>,
-    #[serde(rename = "gameMode")]
-    pub game_mode: Option<String>,
-    #[serde(rename = "gameName")]
-    pub game_name: Option<String>,
-    #[serde(rename = "gameStartTimestamp")]
-    pub game_start_timestamp: Option<i64>,
-    #[serde(rename = "gameType")]
-    pub game_type: Option<String>,
-    #[serde(rename = "gameVersion")]
-    pub game_version: Option<String>,
-    #[serde(rename = "mapId")]
-    pub map_id: Option<i32>,
-    pub participants: Vec<ParticipantDto>,
-    #[serde(rename = "platformId")]
-    pub platform_id: Option<String>,
-    #[serde(rename = "queueId")]
-    pub queue_id: Option<i32>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ParticipantDto {
-    pub puuid: String,
-    #[serde(rename = "summonerName")]
-    pub summoner_name: Option<String>,
-    #[serde(rename = "championId")]
-    pub champion_id: Option<u32>,
-    #[serde(rename = "championName")]
-    pub champion_name: Option<String>,
-    pub kills: Option<u32>,
-    pub deaths: Option<u32>,
-    pub assists: Option<u32>,
-    #[serde(rename = "totalMinionsKilled")]
-    pub total_minions_killed: Option<u32>,
-    #[serde(rename = "neutralMinionsKilled")]
-    pub neutral_minions_killed: Option<u32>,
-    #[serde(rename = "teamPosition")]
-    pub team_position: Option<String>,
-    pub win: Option<bool>,
-    #[serde(rename = "timePlayed")]
-    pub time_played: Option<i32>,
-}
 
 // ---------- Helpers ----------
 
@@ -88,12 +18,17 @@ fn compute_match_duration_seconds(info: &InfoDto) -> u64 {
         // Pre 11.20 — gameDuration is milliseconds, convert to seconds
         (Some(d), None) => (d.max(0) as u64) / 1000,
         // Fallback: max participant timePlayed
-        _ => info
-            .participants
-            .iter()
-            .filter_map(|p| p.time_played.map(|t| t as u64))
-            .max()
-            .unwrap_or(0),
+        _ => {
+            if let Some(participants) = &info.participants {
+                participants
+                    .iter()
+                    .filter_map(|p| p.time_played.map(|t| t as u64))
+                    .max()
+                    .unwrap_or(0)
+            } else {
+                0
+            }
+        }
     }
 }
 
@@ -112,15 +47,16 @@ fn champion_name_from_id(id: u32) -> String {
 }
 
 // Participant picker using typed DTOs
-pub fn get_participant_by_puuid<'a>(
+fn get_participant_by_puuid<'a>(
     match_data: &'a MatchDto,
     puuid: &str,
 ) -> Option<&'a ParticipantDto> {
     match_data
         .info
         .participants
+        .as_ref()? // &Vec<ParticipantDto>
         .iter()
-        .find(|p| p.puuid == puuid)
+        .find(|p| p.puuid.as_deref() == Some(puuid))
 }
 
 /// Rank info for summoner
@@ -313,7 +249,7 @@ pub async fn get_dashboard_data(
         // IMPORTANT: match-v5 uses regional route (e.g., "europe"), not platform (euw1)
         // If your fetch_raw selects base by this param, pass "europe" here.
         let match_json = crate::api::riot::fetch_raw(&app, &match_endpoint, "euw1").await?;
-
+        println!("[DEBUG] Match JSON: {match_json:?}");
         let match_data: MatchDto = serde_json::from_str(&match_json)
             .map_err(|e| format!("Failed to deserialize match {}: {}", match_id, e))?;
 
@@ -382,6 +318,7 @@ pub async fn get_dashboard_data(
         .unwrap_or_else(|| "UNKNOWN".into());
 
     // Calculate average game time
+    #[allow(unused_variables)]
     let avg_game_time = if total_games > 0 {
         let total_secs: u64 = matches
             .iter()
@@ -459,6 +396,7 @@ pub async fn get_dashboard_data(
         "0:00".into()
     };
     println!("[DEBUG] Champion Mastery: {champion_mastery:?}");
+
     Ok(DashboardData {
         summoner: SummonerData {
             display_name,

@@ -54,6 +54,7 @@ pub struct BannedChampion {
     pub pick_turn: u32,
 }
 
+#[allow(dead_code)]
 impl MatchData {
     pub fn is_active(&self) -> bool {
         self.game_length < 0
