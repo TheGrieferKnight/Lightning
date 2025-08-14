@@ -34,9 +34,6 @@ export const useGameData = () => {
       const updatedPath = applicationPath.replace(/\//g, "\\").replace("summoner_spells\\SummonerFlash.png", "");
 
       pathRef.current = updatedPath;
-      // setPath(updatedPath);
-
-      console.log(updatedPath);
 
       const response: Spells = await invoke("get_summoner_spells");
       const matchResponse: MatchData = await invoke("get_match_data");
@@ -49,7 +46,6 @@ export const useGameData = () => {
       ) {
         setMatchData(matchResponse);
       }
-      console.log(matchResponse);
 
 
       console.log("Received summoner spells:", response);

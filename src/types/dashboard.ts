@@ -32,6 +32,30 @@ export type ColorType =
   | "indigo"
   | "orange";
 
+  /* -------------------- Ranked Data -------------------- */
+export interface MiniSeriesDTO {
+  losses: number;
+  progress: string;
+  target: number;
+  wins: number;
+}
+
+export interface LeagueEntryDTO {
+  leagueId: string;
+  puuid: string;
+  queueType: string;
+  tier: string;
+  rank: string; // division
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+  hotStreak: boolean;
+  veteran: boolean;
+  freshBlood: boolean;
+  inactive: boolean;
+  miniSeries?: MiniSeriesDTO;
+}
+
 /* -------------------- Rank & Summoner -------------------- */
 export interface Rank {
   tier: string;
@@ -44,7 +68,7 @@ export interface SummonerData {
   level: number;
   profileIconId: number;
   profileIconPath: string;
-  rank: Rank;
+  rank: LeagueEntryDTO; // ✅ now full ranked object
   winRate: number;
   recentGames: number;
   favoriteRole: string;
@@ -236,11 +260,24 @@ export interface PerkStyleSelectionDto {
   var3?: number;
 }
 
-/* -------------------- Live Game Data (unchanged) -------------------- */
+/* -------------------- Match Data (simplified for dashboard) -------------------- */
+export interface Match {
+  matchId: string; // Riot's match_id like "EUW1_1234567890"
+  gameId: number;  // numeric gameId
+  champion: string;
+  result: string;
+  kda: string;
+  duration: string;
+  gameMode: string;
+  timestamp: string;
+  cs: number;
+}
+
+/* -------------------- Live Game Data -------------------- */
 export interface LiveGameData {
   gameMode: string;
   champion: string;
-  gameTime: string;
+  gametime: string;
   performanceScore: number;
   progress: number;
 }
@@ -254,9 +291,9 @@ export interface DashboardStats {
 /* -------------------- Dashboard Data -------------------- */
 export interface DashboardData {
   summoner: SummonerData;
-  matches: MatchDto[];
+  matches: Match[]; //
   championMastery: ChampionMastery[];
-  liveGame: LiveGameData;
+  liveGame?: LiveGameData;
   stats: DashboardStats;
   imagePath: string;
 }

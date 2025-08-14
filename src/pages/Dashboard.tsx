@@ -14,13 +14,28 @@ import { formatTime, sectionBase } from "../utils/dashboardUtils";
 export default function LeagueDashboard() {
   const [isLive, setIsLive] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [showAllMatches, setShowAllMatches] = useState(false); // NEW STATE
+  const [showAllMatches, setShowAllMatches] = useState(false);
   const { data, loading, error, refetch } = useDashboardData();
 
+  // Clock update every second
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Auto-refresh dashboard every 30 seconds
+  useEffect(() => {
+    console.log("[LeagueDashboard] Setting up auto-refresh interval...");
+    const refreshInterval = setInterval(() => {
+      console.log("[LeagueDashboard] Auto-refreshing dashboard data...");
+      refetch();
+    }, 30_000);
+
+    return () => {
+      console.log("[LeagueDashboard] Clearing auto-refresh interval...");
+      clearInterval(refreshInterval);
+    };
+  }, [refetch]);
 
   const toggleLiveGame = () => setIsLive((prev) => !prev);
 
@@ -54,7 +69,6 @@ export default function LeagueDashboard() {
   const { summoner, matches, championMastery, liveGame, stats, imagePath } =
     data;
 
-  // Decide how many matches to show
   const displayedMatches = showAllMatches ? matches : matches.slice(0, 5);
 
   return (
@@ -75,7 +89,7 @@ export default function LeagueDashboard() {
             icon={Trophy}
             title="Win Rate"
             value={`${summoner.winRate}%`}
-            subtitle="Last 20 games"
+            subtitle="This season"
             trend={5}
             color="indigo"
           />
@@ -90,8 +104,8 @@ export default function LeagueDashboard() {
           <StatCard
             icon={Award}
             title="Current LP"
-            value={summoner.rank.lp}
-            subtitle={`${summoner.rank.tier} ${summoner.rank.division}`}
+            value={summoner.rank.leaguePoints}
+            subtitle={`${summoner.rank.tier} ${summoner.rank.rank}`}
             trend={-3}
             color="yellow"
           />
@@ -132,7 +146,7 @@ export default function LeagueDashboard() {
               <div className="space-y-3">
                 {displayedMatches.map((match) => (
                   <MatchHistoryItem
-                    key={match.id}
+                    key={match.matchId}
                     match={match}
                     path={imagePath}
                   />

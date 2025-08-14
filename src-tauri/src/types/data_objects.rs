@@ -15,6 +15,33 @@ pub struct MetadataDto {
     pub participants: Vec<String>, // A list of participant PUUIDs
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct MiniSeriesDTO {
+    pub losses: i32,
+    pub progress: String,
+    pub target: i32,
+    pub wins: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct LeagueEntryDTO {
+    pub league_id: String,
+    pub puuid: String,
+    pub queue_type: String,
+    pub tier: String,
+    pub rank: String,
+    pub league_points: i32,
+    pub wins: u32,
+    pub losses: u32,
+    pub hot_streak: bool,
+    pub veteran: bool,
+    pub fresh_blood: bool,
+    pub inactive: bool,
+    pub mini_series: Option<MiniSeriesDTO>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct InfoDto {

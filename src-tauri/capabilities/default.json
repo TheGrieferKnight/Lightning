@@ -6,8 +6,6 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "core:window:allow-set-position",
-    "sql:allow-load",
-    "sql:default"
+    "core:window:allow-set-position"
   ]
 }
