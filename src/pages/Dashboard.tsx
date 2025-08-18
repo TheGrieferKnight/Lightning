@@ -1,3 +1,4 @@
+// src/pages/Dashboard.tsx
 import "../styles/App.css";
 import { useState, useEffect } from "react";
 import { Trophy, Activity, Award, Clock, Star } from "lucide-react";
@@ -11,7 +12,7 @@ import { LiveGameStatus } from "../components/LiveGameStatus";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { formatTime, sectionBase } from "../utils/dashboardUtils";
 
-export default function LeagueDashboard() {
+export default function DashboardPage() {
   const [isLive, setIsLive] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showAllMatches, setShowAllMatches] = useState(false);
@@ -25,14 +26,10 @@ export default function LeagueDashboard() {
 
   // Auto-refresh dashboard every 30 seconds
   useEffect(() => {
-    console.log("[LeagueDashboard] Setting up auto-refresh interval...");
     const refreshInterval = setInterval(() => {
-      console.log("[LeagueDashboard] Auto-refreshing dashboard data...");
       refetch();
     }, 30_000);
-
     return () => {
-      console.log("[LeagueDashboard] Clearing auto-refresh interval...");
       clearInterval(refreshInterval);
     };
   }, [refetch]);
@@ -72,116 +69,105 @@ export default function LeagueDashboard() {
   const displayedMatches = showAllMatches ? matches : matches.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-app-gradient-smooth has-noise text-white pt-9">
-      <DashboardHeader
-        isLive={isLive}
-        currentTime={formatTime(currentTime)}
-        onToggleLiveGame={toggleLiveGame}
-      />
+    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      {/* Profile */}
+      <SummonerProfile summoner={summoner} />
 
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Profile */}
-        <SummonerProfile summoner={summoner} />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          icon={Trophy}
+          title="Win Rate"
+          value={`${summoner.winRate}%`}
+          subtitle="This season"
+          trend={5}
+          color="indigo"
+        />
+        <StatCard
+          icon={Activity}
+          title="Games Played"
+          value={stats.totalGames}
+          subtitle="This season"
+          trend={12}
+          color="blue"
+        />
+        <StatCard
+          icon={Award}
+          title="Current LP"
+          value={summoner.rank.leaguePoints}
+          subtitle={`${summoner.rank.tier} ${summoner.rank.rank}`}
+          trend={-3}
+          color="yellow"
+        />
+        <StatCard
+          icon={Clock}
+          title="Avg Game Time"
+          value={stats.avgGameTime}
+          subtitle="Recent matches"
+          color="blue"
+        />
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            icon={Trophy}
-            title="Win Rate"
-            value={`${summoner.winRate}%`}
-            subtitle="This season"
-            trend={5}
-            color="indigo"
-          />
-          <StatCard
-            icon={Activity}
-            title="Games Played"
-            value={stats.totalGames}
-            subtitle="This season"
-            trend={12}
-            color="blue"
-          />
-          <StatCard
-            icon={Award}
-            title="Current LP"
-            value={summoner.rank.leaguePoints}
-            subtitle={`${summoner.rank.tier} ${summoner.rank.rank}`}
-            trend={-3}
-            color="yellow"
-          />
-          <StatCard
-            icon={Clock}
-            title="Avg Game Time"
-            value={stats.avgGameTime}
-            subtitle="Recent matches"
-            color="blue"
-          />
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Match History */}
+        <div className="lg:col-span-2">
+          <div
+            className={`${sectionBase}`}
+            style={{
+              contentVisibility: "auto",
+              containIntrinsicSize: "1px 600px",
+            }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+                <Activity className="w-5 h-5 text-cyan-400" />
+                <span>Recent Matches</span>
+              </h3>
+              {matches.length > 5 && (
+                <button
+                  onClick={() => setShowAllMatches((prev) => !prev)}
+                  className="text-cyan-400 hover:text-cyan-300 text-sm transition-colors"
+                >
+                  {showAllMatches ? "Show Less" : "View All"}
+                </button>
+              )}
+            </div>
+            <div className="space-y-3">
+              {displayedMatches.map((match) => (
+                <MatchHistoryItem
+                  key={match.matchId}
+                  match={match}
+                  path={imagePath}
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Match History */}
-          <div className="lg:col-span-2">
-            <div
-              className={`${sectionBase}`}
-              style={{
-                contentVisibility: "auto",
-                containIntrinsicSize: "1px 600px",
-              }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-white flex items-center space-x-2">
-                  <Activity className="w-5 h-5 text-cyan-400" />
-                  <span>Recent Matches</span>
-                </h3>
-                {matches.length > 5 && (
-                  <button
-                    onClick={() => setShowAllMatches((prev) => !prev)}
-                    className="text-cyan-400 hover:text-cyan-300 text-sm transition-colors"
-                  >
-                    {showAllMatches ? "Show Less" : "View All"}
-                  </button>
-                )}
-              </div>
-              <div className="space-y-3">
-                {displayedMatches.map((match) => (
-                  <MatchHistoryItem
-                    key={match.matchId}
-                    match={match}
-                    path={imagePath}
-                  />
-                ))}
-              </div>
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Champion Mastery */}
+          <div
+            className={`${sectionBase}`}
+            style={{
+              contentVisibility: "auto",
+              containIntrinsicSize: "1px 400px",
+            }}
+          >
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
+              <Star className="w-5 h-5 text-cyan-400" />
+              <span>Champion Mastery</span>
+            </h3>
+            <div className="space-y-3">
+              {championMastery.map((champion) => (
+                <ChampionMasteryCard key={champion.name} champion={champion} />
+              ))}
             </div>
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Champion Mastery */}
-            <div
-              className={`${sectionBase}`}
-              style={{
-                contentVisibility: "auto",
-                containIntrinsicSize: "1px 400px",
-              }}
-            >
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
-                <Star className="w-5 h-5 text-cyan-400" />
-                <span>Champion Mastery</span>
-              </h3>
-              <div className="space-y-3">
-                {championMastery.map((champion) => (
-                  <ChampionMasteryCard
-                    key={champion.name}
-                    champion={champion}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Live Game Status */}
-            {isLive && liveGame && <LiveGameStatus liveGame={liveGame} />}
-          </div>
+          {/* Live Game Status */}
+          {isLive && liveGame && <LiveGameStatus liveGame={liveGame} />}
         </div>
       </div>
     </div>
