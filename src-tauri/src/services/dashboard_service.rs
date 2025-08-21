@@ -11,7 +11,8 @@ use crate::repo::{
     dashboard_repo, live_game_repo, mastery_repo, match_repo, stats_repo, summoner_repo,
 };
 use crate::types::dashboard::{
-    ChampionMastery, DashboardData, LiveGameData, Match, Stats, SummonerData,
+    ChampionMastery, DashboardData, LiveGameData, Match, MatchDetails, Participant, Stats,
+    SummonerData, Team,
 };
 use crate::types::data_objects::{LeagueEntryDTO, MatchDto, ParticipantDto};
 use crate::utils::champions::champion_name_from_id;
@@ -157,23 +158,6 @@ fn load_dashboard_from_cache(
         .collect::<Result<Vec<_>, _>>()
         .context("collect mastery")?;
 
-    let live_row = conn
-        .query_row(
-            "SELECT game_mode, champion, game_time, performance_score, progress
-       FROM live_game WHERE puuid = ?1",
-            params![puuid],
-            |r| {
-                Ok(LiveGameData {
-                    game_mode: r.get::<_, String>(0)?,
-                    champion: r.get::<_, String>(1)?,
-                    game_time: r.get::<_, String>(2)?,
-                    performance_score: r.get::<_, f64>(3)? as f32,
-                    progress: r.get::<_, i64>(4)? as u8,
-                })
-            },
-        )
-        .optional()?;
-
     let matches_vec = crate::repo::dashboard_repo::get_dashboard_matches(conn, puuid)?;
 
     Ok(Some(DashboardData {
@@ -204,7 +188,6 @@ fn load_dashboard_from_cache(
         },
         matches: matches_vec,
         champion_mastery,
-        live_game: live_row,
         stats: Stats {
             total_games,
             avg_game_time,
@@ -330,6 +313,114 @@ pub async fn build_dashboard(
         let duration_secs = compute_match_duration_seconds(&match_data.info);
         let ts = timestamp_to_datetime(match_data.info.game_start_timestamp);
 
+        let match_details: MatchDetails;
+
+        let mut team1_kda: Vec<u16> = Vec::new();
+        team1_kda.push(0);
+        team1_kda.push(0);
+        team1_kda.push(0);
+        let mut team2_kda: Vec<u16> = Vec::new();
+        team2_kda.push(0);
+        team2_kda.push(0);
+        team2_kda.push(0);
+
+        let mut team1_gold = 0;
+        let mut team1_towers = 0;
+        let mut team1_inhibitors = 0;
+        let mut team2_gold = 0;
+        let mut team2_towers = 0;
+        let mut team2_inhibitors = 0;
+
+        let teams: Option<[Team; 2]> = match match_data.info.participants {
+            Some(participants) => {
+                let mut all_participants: Vec<Participant> = Vec::new();
+
+                // accumulators
+
+                for p in participants {
+                    let participant = Participant {
+                        team: p.team_id.unwrap_or(0),
+                        summoner_name: p.riot_id_game_name.unwrap_or_default(),
+                        champion_name: p.champion_name.unwrap_or_default(),
+                        kills: p.kills.unwrap_or(0),
+                        deaths: p.deaths.unwrap_or(0),
+                        assists: p.assists.unwrap_or(0),
+                        lane: p.lane.unwrap_or_default(),
+                        item0: p.item0.unwrap_or(0),
+                        item1: p.item1.unwrap_or(0),
+                        item2: p.item2.unwrap_or(0),
+                        item3: p.item3.unwrap_or(0),
+                        item4: p.item4.unwrap_or(0),
+                        item5: p.item5.unwrap_or(0),
+                        item6: p.item6.unwrap_or(0),
+                        total_minions_killed: p
+                            .total_minions_killed
+                            .unwrap_or(0)
+                            .saturating_add(p.neutral_minions_killed.unwrap_or(0)),
+                        total_damage_dealt_to_champions: p
+                            .total_damage_dealt_to_champions
+                            .unwrap_or(0),
+                    };
+
+                    // update totals
+                    if p.team_id.unwrap_or(0) == 100 {
+                        team1_towers += p.turret_kills.unwrap_or(0);
+                        team1_inhibitors += p.inhibitor_kills.unwrap_or(0);
+                        team1_kda[0] += p.kills.unwrap_or(0);
+                        team1_kda[1] += p.deaths.unwrap_or(0);
+                        team1_kda[2] += p.assists.unwrap_or(0);
+                        team1_gold += p.gold_earned.unwrap_or(0) as u32;
+                    }
+                    if p.team_id.unwrap_or(0) == 200 {
+                        team2_towers += p.turret_kills.unwrap_or(0);
+                        team2_inhibitors += p.inhibitor_kills.unwrap_or(0);
+                        team2_kda[0] += p.kills.unwrap_or(0);
+                        team2_kda[1] += p.deaths.unwrap_or(0);
+                        team2_kda[2] += p.assists.unwrap_or(0);
+                        team2_gold += p.gold_earned.unwrap_or(0) as u32;
+                    }
+
+                    all_participants.push(participant);
+                }
+
+                // Now you can use total_gold and total_kills
+                println!("Team 1 Gold: {team1_gold}, Team 1 Kills: {team1_kda:?}");
+                println!("Team 2 Gold: {team2_gold}, Team 2 Kills: {team2_kda:?}");
+
+                // split into two teams of 5
+                if all_participants.len() == 10 {
+                    let mut team1: Vec<Participant> = Vec::new();
+                    let mut team2: Vec<Participant> = Vec::new();
+
+                    for p in all_participants {
+                        if p.team == 100 {
+                            team1.push(p);
+                        } else if p.team == 200 {
+                            team2.push(p);
+                        }
+                    }
+
+                    let team1: [Participant; 5] = team1.try_into().unwrap();
+                    let team2: [Participant; 5] = team2.try_into().unwrap();
+
+                    Some([team1, team2])
+                } else {
+                    None
+                }
+            }
+            None => None,
+        };
+
+        match_details = MatchDetails {
+            teams: teams.unwrap(),
+            towers_destroyed: [team1_towers as u8, team2_towers as u8],
+            inhibitors_destroyed: [team1_inhibitors as u8, team2_inhibitors as u8],
+            gold_earned: [team1_gold, team2_gold],
+            team_kda: [team1_kda.try_into().unwrap(), team2_kda.try_into().unwrap()],
+        };
+
+        println!("{match_details:?}");
+
         let m = Match {
             match_id: match_data.metadata.match_id.clone(),
             game_id: match_data.info.game_id.unwrap_or_default() as u64,
@@ -345,6 +436,7 @@ pub async fn build_dashboard(
             // src-tauri/src/commands/dashboard/service.rs (continued)
             timestamp: ts.format("%Y-%m-%d %H:%M").to_string(),
             cs,
+            match_details: match_details,
         };
 
         matches.push(m);
@@ -476,7 +568,6 @@ pub async fn build_dashboard(
         },
         matches, // ✅ make sure this is the vector you built above
         champion_mastery,
-        live_game,
         stats: Stats {
             total_games,
             avg_game_time,

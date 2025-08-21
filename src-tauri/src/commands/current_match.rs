@@ -50,16 +50,17 @@ pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32,
         _ => return Err("Expected match data".into()),
     };
 
-    let team_id = match_data
-        .participants
-        .iter()
-        .find(|p| p.puuid == puuid)
-        .map(|p| p.team_id)
-        .unwrap_or(100);
+    let participants = match_data.participants.iter();
 
-    Ok(match_data
-        .participants
-        .iter()
+    let mut team_id = 0;
+
+    for p in participants.clone() {
+        if p.puuid == puuid {
+            team_id = p.team_id;
+        }
+    }
+
+    Ok(participants
         .filter(|p| p.team_id == team_id)
         .map(|p| (p.champion_id, p.spell1_id, p.spell2_id))
         .collect())

@@ -1,5 +1,14 @@
 import { LucideIcon } from "lucide-react";
 
+/* -------------------- Match History ----------------------- */
+
+export interface MatchHistoryItemProps{ 
+  match: Match;
+  path: string;
+  expanded: boolean,
+  onToggle: () => void,
+}
+
 /* -------------------- Champion Mastery -------------------- */
 export interface ChampionMastery {
   icon: React.ReactNode;
@@ -265,12 +274,41 @@ export interface Match {
   matchId: string; // Riot's match_id like "EUW1_1234567890"
   gameId: number;  // numeric gameId
   champion: string;
-  result: string;
+  result: "Victory" | "Defeat";
   kda: string;
   duration: string;
   gameMode: string;
   timestamp: string;
   cs: number;
+  matchDetails: MatchDetails;
+}
+
+export interface ParticipantMH {
+  summonerName: string;
+  championName: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  lane: string;
+  item0 : number;
+  item1 : number;
+  item2 : number;
+  item3 : number;
+  item4 : number;
+  item5 : number;
+  item6 : number;
+  totalMinionsKilled: number;
+  totalDamageDealtToChampions: number;
+}
+
+type Team = [ParticipantMH,ParticipantMH,ParticipantMH,ParticipantMH,ParticipantMH,];
+
+export interface MatchDetails {
+  teams: [Team, Team];
+  towersDestroyed: [number, number];     // per team
+  inhibitorsDestroyed: [number, number]; // per team
+  goldEarned: [number, number];          // per team
+  teamKda: [[number, number, number], [number, number, number]]; // [kills, deaths, assists]
 }
 
 /* -------------------- Live Game Data -------------------- */
@@ -293,7 +331,6 @@ export interface DashboardData {
   summoner: SummonerData;
   matches: Match[]; //
   championMastery: ChampionMastery[];
-  liveGame?: LiveGameData;
   stats: DashboardStats;
   imagePath: string;
 }

@@ -1,21 +1,20 @@
 // src/pages/Dashboard.tsx
-import "../styles/App.css";
 import { useState, useEffect } from "react";
 import { Trophy, Activity, Award, Clock, Star } from "lucide-react";
-
-import { DashboardHeader } from "../components/DashboardHeader";
 import { SummonerProfile } from "../components/SummonerProfile";
 import { StatCard } from "../components/StatCard";
 import { MatchHistoryItem } from "../components/MatchHistoryItem";
 import { ChampionMasteryCard } from "../components/ChampionMasteryCard";
-import { LiveGameStatus } from "../components/LiveGameStatus";
 import { useDashboardData } from "../hooks/useDashboardData";
-import { formatTime, sectionBase } from "../utils/dashboardUtils";
+import { sectionBase } from "../utils/dashboardUtils";
 
 export default function DashboardPage() {
-  const [isLive, setIsLive] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [_currentTime, setCurrentTime] = useState(new Date());
   const [showAllMatches, setShowAllMatches] = useState(false);
+  const [expandedMatches, setExpandedMatches] = useState<Set<string>>(
+    new Set()
+  );
+
   const { data, loading, error, refetch } = useDashboardData();
 
   // Clock update every second
@@ -34,9 +33,7 @@ export default function DashboardPage() {
     };
   }, [refetch]);
 
-  const toggleLiveGame = () => setIsLive((prev) => !prev);
-
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="min-h-screen bg-app-gradient-smooth has-noise text-white flex items-center justify-center">
         <div className="text-center">
@@ -63,10 +60,20 @@ export default function DashboardPage() {
     );
   }
 
-  const { summoner, matches, championMastery, liveGame, stats, imagePath } =
-    data;
-
+  const { summoner, matches, championMastery, stats, imagePath } = data;
   const displayedMatches = showAllMatches ? matches : matches.slice(0, 5);
+
+  const toggleExpand = (matchId: string) => {
+    setExpandedMatches((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(matchId)) {
+        newSet.delete(matchId);
+      } else {
+        newSet.add(matchId);
+      }
+      return newSet;
+    });
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
@@ -139,6 +146,8 @@ export default function DashboardPage() {
                   key={match.matchId}
                   match={match}
                   path={imagePath}
+                  expanded={expandedMatches.has(match.matchId)}
+                  onToggle={() => toggleExpand(match.matchId)}
                 />
               ))}
             </div>
@@ -165,9 +174,6 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-
-          {/* Live Game Status */}
-          {isLive && liveGame && <LiveGameStatus liveGame={liveGame} />}
         </div>
       </div>
     </div>

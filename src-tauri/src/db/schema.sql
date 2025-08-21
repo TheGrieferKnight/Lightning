@@ -83,7 +83,43 @@ CREATE TABLE IF NOT EXISTS dashboard_matches (
   timestamp TEXT NOT NULL,
   cs INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
+  -- per-team stats
+  team1_towers_destroyed INTEGER DEFAULT 0,
+  team2_towers_destroyed INTEGER DEFAULT 0,
+  team1_inhibitors_destroyed INTEGER DEFAULT 0,
+  team2_inhibitors_destroyed INTEGER DEFAULT 0,
+  team1_gold_earned INTEGER DEFAULT 0,
+  team2_gold_earned INTEGER DEFAULT 0,
+  team1_kills INTEGER DEFAULT 0,
+  team1_deaths INTEGER DEFAULT 0,
+  team1_assists INTEGER DEFAULT 0,
+  team2_kills INTEGER DEFAULT 0,
+  team2_deaths INTEGER DEFAULT 0,
+  team2_assists INTEGER DEFAULT 0,
   FOREIGN KEY (puuid) REFERENCES summoners(puuid) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS participants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  match_id TEXT NOT NULL,
+  team INTEGER NOT NULL,
+  -- 100 or 200
+  summoner_name TEXT NOT NULL,
+  champion_name TEXT NOT NULL,
+  kills INTEGER NOT NULL,
+  deaths INTEGER NOT NULL,
+  assists INTEGER NOT NULL,
+  lane TEXT NOT NULL,
+  item0 INTEGER NOT NULL,
+  item1 INTEGER NOT NULL,
+  item2 INTEGER NOT NULL,
+  item3 INTEGER NOT NULL,
+  item4 INTEGER NOT NULL,
+  item5 INTEGER NOT NULL,
+  item6 INTEGER NOT NULL,
+  total_minions_killed INTEGER NOT NULL,
+  total_damage_dealt_to_champions INTEGER NOT NULL,
+  FOREIGN KEY (match_id) REFERENCES dashboard_matches(match_id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_dashboard_matches_puuid ON dashboard_matches (puuid);
