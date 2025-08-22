@@ -1,8 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Minus, Square, Copy, X } from "lucide-react";
-import { getCurrentWindow, type ResizeDirection } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const win = getCurrentWindow();
+
+type ResizeDirection =
+  | "North"
+  | "South"
+  | "East"
+  | "West"
+  | "NorthEast"
+  | "NorthWest"
+  | "SouthEast"
+  | "SouthWest";
 
 export const Titlebar: React.FC = () => {
   const [isMax, setIsMax] = useState(false);
@@ -33,19 +43,15 @@ export const Titlebar: React.FC = () => {
 
   return (
     <>
-      {/* Titlebar */}
       <div
-        className={
-          "fixed top-0 left-0 right-0 z-50 h-9 px-3 flex items-center justify-between " +
-          "bg-header-gradient-smooth backdrop-blur-md"
-        }
+        className="fixed top-0 left-0 right-0 z-50 h-9 px-3 flex items-center justify-between bg-header-gradient-smooth supports-[backdrop-filter]:backdrop-blur-sm border-b border-neutral-800/60 has-noise"
         onDoubleClick={onDoubleClick}
       >
         {/* Drag region */}
         <div
           ref={dragRef}
           data-tauri-drag-region
-          className="flex items-center gap-2 select-none"
+          className="flex items-center gap-2 select-none h-full"
         >
           <div className="h-5 w-5 rounded-md bg-avatar-gradient-smooth has-noise-light shadow-md" />
           <span className="text-sm font-semibold text-cyan-200">Lightning</span>
@@ -95,9 +101,7 @@ function TitlebarBtn({
   accent?: "danger" | "normal";
 }) {
   const base =
-    "flex items-center justify-center h-8 w-8 rounded-md transition-colors duration-150 " +
-    "text-cyan-100/80 hover:text-cyan-100 focus:outline-none";
-
+    "flex items-center justify-center h-8 w-8 rounded-md transition-colors duration-150 text-cyan-100/80 hover:text-cyan-100 focus:outline-none";
   const normalHover = "hover:bg-white/10";
   const dangerHover =
     "hover:bg-red-500/20 hover:text-red-200 focus-visible:ring-2 focus-visible:ring-red-400/40";
@@ -107,14 +111,14 @@ function TitlebarBtn({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={`${base} ${accent === "danger" ? dangerHover : normalHover} `}
+      className={`${base} ${accent === "danger" ? dangerHover : normalHover}`}
     >
       <div className="flex items-center justify-center">{icon}</div>
     </button>
   );
 }
 
-const ResizeHandles: React.FC = () => {
+export const ResizeHandles: React.FC = () => {
   const start = async (edge: ResizeDirection) => {
     try {
       await win.startResizeDragging(edge);

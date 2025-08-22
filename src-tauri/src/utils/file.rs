@@ -17,6 +17,7 @@ pub async fn save_puuid(app: &tauri::AppHandle, puuid: &str) -> Result<(), Strin
     Ok(())
 }
 
+#[allow(dead_code)]
 pub async fn save_file(
     app: &tauri::AppHandle,
     filename: &str,

@@ -29,10 +29,10 @@ export const SummonerProfile: React.FC<{ summoner: SummonerData }> = ({
         </span>
         <span className="flex items-center gap-1">
           <Trophy className="w-4 h-4" /> {summoner.rank.tier}{" "}
-          {summoner.rank.division}
+          {summoner.rank.rank}
         </span>
         <span className="flex items-center gap-1">
-          <Target className="w-4 h-4" /> {summoner.rank.lp} LP
+          <Target className="w-4 h-4" /> {summoner.rank.leaguePoints} LP
         </span>
       </div>
       <p className="mt-2 text-sm text-cyan-300/80">

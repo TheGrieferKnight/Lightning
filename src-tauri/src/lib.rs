@@ -1,12 +1,19 @@
 mod api;
+mod clients;
 mod commands;
+mod config;
 mod data;
+mod db;
+mod error;
+mod repo;
+mod services;
 mod types;
 mod utils;
+
+// Commands
 use api::data_dragon::{download_necessary_files, get_image_path};
 use commands::current_match::*;
 use commands::dashboard::*;
-use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,6 +21,7 @@ pub fn run() {
         eprintln!("[warning] WEBVIEW2_DISABLE_GPU was set; unsetting to keep GPU enabled.");
         std::env::remove_var("WEBVIEW2_DISABLE_GPU");
     }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![

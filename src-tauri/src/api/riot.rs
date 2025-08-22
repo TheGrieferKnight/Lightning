@@ -40,7 +40,7 @@ pub async fn fetch_puuid(app: &tauri::AppHandle) -> Result<String, String> {
     let status = response.status();
     if !status.is_success() {
         let error_text = response.text().await.unwrap_or_default();
-        return Err(format!("PUUID fetch error {}: {}", status, error_text));
+        return Err(format!("PUUID fetch error {status}: {error_text}"));
     }
 
     let puuid_data: PuuidData = response
@@ -60,6 +60,12 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
 
     let puuid = fetch_puuid(app).await?;
     let payload;
+
+    /*
+    puuid = String::from(
+        "sWa0-CXDSMK9arBkxHP-AN-dh4vSiJkmnO_SF0NuPYtI5NvLNm6mvl1OOC6AO8VcBe7SDKJmOUJtjw",
+    );
+    */
 
     match data_to_fetch {
         "CurrentMatch" => {
@@ -102,7 +108,7 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
     let status = response.status();
     if !status.is_success() {
         let error_text = response.text().await.unwrap_or_default();
-        return Err(format!("HTTP error {}: {}", status, error_text));
+        return Err(format!("HTTP error {status}: {error_text}"));
     }
 
     let response_text = response
@@ -155,7 +161,7 @@ pub async fn fetch_raw(
     let status = response.status();
     if !status.is_success() {
         let error_text = response.text().await.unwrap_or_default();
-        return Err(format!("HTTP error {}: {}", status, error_text));
+        return Err(format!("HTTP error {status}: {error_text}"));
     }
     let responses = response
         .text()
