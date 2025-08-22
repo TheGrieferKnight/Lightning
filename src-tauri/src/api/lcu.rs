@@ -3,10 +3,12 @@ use anyhow::Result;
 
 pub async fn get_tag_line_simple() -> Result<String> {
     let api_client = LeagueApiClient::new().await?;
-    let tag_line = api_client.get_tag_line().await
+    let tag_line = api_client.get_tag_line().await?;
+    Ok(tag_line)
 }
 
 pub async fn get_game_name_simple() -> Result<String> {
     let api_client = LeagueApiClient::new().await?;
-    let game_name = api_client.get_game_name().await
+    let game_name = api_client.get_game_name().await?;
+    Ok(game_name)
 }

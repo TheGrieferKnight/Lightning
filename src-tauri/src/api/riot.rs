@@ -4,10 +4,10 @@ use crate::types::{
     response::{PuuidData, Responses},
 };
 use crate::utils::file::{load_puuid, save_puuid};
-use reqwest::Error;
+use anyhow::{Context, Result};
 
 /// Fetch the player's PUUID from Riot API and save it locally.
-pub async fn fetch_puuid(app: &tauri::AppHandle) -> Result<String, String> {
+pub async fn fetch_puuid(app: &tauri::AppHandle) -> Result<String> {
     // Try loading from file first
     if let Ok(puuid) = load_puuid(app).await {
         return Ok(puuid);
@@ -17,6 +17,7 @@ pub async fn fetch_puuid(app: &tauri::AppHandle) -> Result<String, String> {
     let region = "europe".to_string();
 
     let game_name = lcu::get_game_name_simple().await?;
+
     let tag_line = lcu::get_tag_line_simple().await?;
 
     let endpoint = format!("/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}");
@@ -34,21 +35,23 @@ pub async fn fetch_puuid(app: &tauri::AppHandle) -> Result<String, String> {
         )
         .json(&payload)
         .send()
-        .await
-        .map_err(|e: Error| format!("Request failed: {e}"))?;
+        .await?;
 
     let status = response.status();
+
+    let body = response
+        .text()
+        .await
+        .context("Failed to read response body")?;
+
     if !status.is_success() {
-        let error_text = response.text().await.unwrap_or_default();
-        return Err(format!("PUUID fetch error {status}: {error_text}"));
+        anyhow::bail!("PUUID fetch error {status}: {body}");
     }
 
-    let puuid_data: PuuidData = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse PUUID JSON: {e}"))?;
+    let puuid_data: PuuidData =
+        serde_json::from_str(&body).context("Failed to parse PUUID JSON")?;
 
-    save_puuid(app, &puuid_data.puuid).await?;
+    save_puuid(app, &puuid_data.puuid).await;
     Ok(puuid_data.puuid)
 }
 
@@ -58,7 +61,9 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
     let region = "europe".to_string();
     let url = "https://riot-api-proxy-lightnings-projects-ba45f9d4.vercel.app/api/riot";
 
-    let puuid = fetch_puuid(app).await?;
+    let puuid = fetch_puuid(app)
+        .await
+        .map_err(|e| format!("Error fetching puuid: {e}"))?;
     let payload;
 
     /*
@@ -78,14 +83,24 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
             payload = serde_json::json!({ "endpoint": endpoint, "region": game_region });
         }
         "Puuid" => {
-            let game_name = lcu::get_game_name_simple().await?;
-            let tag_line = lcu::get_tag_line_simple().await?;
+            let game_name = lcu::get_game_name_simple()
+                .await
+                .map_err(|e| e.to_string())?;
+
+            let tag_line = lcu::get_tag_line_simple()
+                .await
+                .map_err(|e| e.to_string())?;
             let endpoint = format!("/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}");
             payload = serde_json::json!({ "endpoint": endpoint, "region": region });
         }
         "SummonerName" => {
-            let game_name = lcu::get_game_name_simple().await?;
-            let tag_line = lcu::get_tag_line_simple().await?;
+            let game_name = lcu::get_game_name_simple()
+                .await
+                .map_err(|e| e.to_string())?;
+
+            let tag_line = lcu::get_tag_line_simple()
+                .await
+                .map_err(|e| e.to_string())?;
             payload = serde_json::json!({"SummonerName" : format!("{game_name}#{tag_line}")});
         }
         _ => {
@@ -134,11 +149,7 @@ pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<R
 
 /// Fetch raw JSON from Riot API via your proxy.
 /// This is similar to `fetch_data` but returns the raw JSON string instead of parsing into `Responses`.
-pub async fn fetch_raw(
-    _app: &tauri::AppHandle,
-    endpoint: &str,
-    region: &str,
-) -> Result<String, String> {
+pub async fn fetch_raw(_app: &tauri::AppHandle, endpoint: &str, region: &str) -> Result<String> {
     let url = "https://riot-api-proxy-lightnings-projects-ba45f9d4.vercel.app/api/riot";
 
     let payload = serde_json::json!({
@@ -147,6 +158,7 @@ pub async fn fetch_raw(
     });
 
     let client = reqwest::Client::new();
+
     let response = client
         .post(url)
         .header(
@@ -156,16 +168,17 @@ pub async fn fetch_raw(
         .json(&payload)
         .send()
         .await
-        .map_err(|e| format!("Request failed: {e}"))?;
+        .context("Request failed")?;
 
     let status = response.status();
-    if !status.is_success() {
-        let error_text = response.text().await.unwrap_or_default();
-        return Err(format!("HTTP error {status}: {error_text}"));
-    }
-    let responses = response
+    let body = response
         .text()
         .await
-        .map_err(|e| format!("Failed to read response: {e}"))?;
-    Ok(responses)
+        .context("Failed to read response body")?;
+
+    if !status.is_success() {
+        anyhow::bail!("HTTP error {status} : {body}")
+    }
+
+    Ok(body)
 }
