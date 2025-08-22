@@ -14,6 +14,7 @@ pub enum LockfileError {
     Parse(String),
     Request(reqwest::Error),
     Json(serde_json::Error),
+    Http(reqwest::StatusCode),
 }
 
 impl From<io::Error> for LockfileError {
@@ -43,6 +44,7 @@ impl std::fmt::Display for LockfileError {
             LockfileError::Parse(msg) => write!(f, "Parse error: {msg}"),
             LockfileError::Request(err) => write!(f, "Request error: {err}"),
             LockfileError::Json(err) => write!(f, "JSON error: {err}"),
+            LockfileError::Http(err) => write!(f, "HTTP error: {err}"),
         }
     }
 }
@@ -78,7 +80,12 @@ impl Lockfile {
     }
 
     async fn locate_lockfile() -> Result<String, io::Error> {
+        #[cfg(target_os = "windows")]
         let path = Path::new("C:/Program Files/Riot Games/League of Legends/lockfile");
+        /*
+                #[cfg(target_os = "macos")]
+                let path = Path::new("/Applications/League of Legends.app/Contents/LoL/lockfile");
+        */
         let mut file = File::open(path).await?;
         let mut contents = String::new();
         file.read_to_string(&mut contents).await?;
@@ -94,11 +101,11 @@ impl Lockfile {
             )));
         }
         Ok(Lockfile {
-            _league_client: parts[0].to_string(),
-            _process_id: parts[1].parse::<i32>()?,
-            api_port: parts[2].parse::<i32>()?,
-            password: parts[3].to_string(),
-            _protocol: parts[4].to_string(),
+            _league_client: parts[0].into(),
+            _process_id: parts[1].parse()?,
+            api_port: parts[2].parse()?,
+            password: parts[3].into(),
+            _protocol: parts[4].into(),
         })
     }
 
@@ -153,10 +160,7 @@ impl LeagueApiClient {
             .send()
             .await?;
         if !response.status().is_success() {
-            return Err(LockfileError::Parse(format!(
-                "HTTP error {}",
-                response.status()
-            )));
+            return Err(LockfileError::Http(response.status()));
         }
         Ok(response.json::<CurrentSummoner>().await?)
     }
