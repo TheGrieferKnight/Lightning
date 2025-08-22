@@ -60,6 +60,12 @@ pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32,
         }
     }
 
+    match team_id {
+        100 => team_id = 200,
+        200 => team_id = 100,
+        _ => team_id = 10,
+    }
+
     Ok(participants
         .filter(|p| p.team_id == team_id)
         .map(|p| (p.champion_id, p.spell1_id, p.spell2_id))
