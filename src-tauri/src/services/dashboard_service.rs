@@ -2,6 +2,7 @@
 use anyhow::{anyhow, Context};
 use chrono::Utc;
 use rusqlite::{params, OptionalExtension, TransactionBehavior};
+use std::path::Path;
 
 use crate::clients::riot as riot_client;
 use crate::config::{DASHBOARD_RECENT_MATCH_COUNT, TTL_DASHBOARD_SECS, TTL_SUMMONER_FIELDS_SECS};
@@ -258,16 +259,20 @@ pub async fn build_dashboard(
         level = sv["summonerLevel"].as_u64().unwrap_or(0) as u32;
         profile_icon_id = sv["profileIconId"].as_u64().unwrap_or(0) as u32;
 
-        let subfolder = "profile_icons";
-        let icon_rel = profile_icon_id.to_string();
+        let subfolder = Path::new("profile_icons");
+
+        let icon_str = profile_icon_id.to_string();
+
+        let icon_rel = Path::new(&icon_str);
+
         profile_icon_path =
-            crate::api::data_dragon::get_image_path(app.clone(), subfolder, &icon_rel)
+            crate::api::data_dragon::get_image_path(app.clone(), subfolder, icon_rel)
                 .await
                 .map_err(|e| anyhow!("get_image_path: {e}"))?;
 
         if !std::path::Path::new(&profile_icon_path).exists() {
             let base = "https://ddragon.leagueoflegends.com/cdn/15.15.1/img/profileicon/";
-            crate::api::data_dragon::download_image(&app, base, &icon_rel, subfolder)
+            crate::api::data_dragon::download_image(&app, base, icon_rel, subfolder)
                 .await
                 .map_err(|e| anyhow!("download_image: {e}"))?;
         }
@@ -279,7 +284,7 @@ pub async fn build_dashboard(
     let match_ids =
         riot_client::fetch_match_ids(&app, &puuid, DASHBOARD_RECENT_MATCH_COUNT).await?;
 
-    println!("[DEEZBUG] {match_ids:?}");
+    println!("{match_ids:?}");
 
     let mut matches = Vec::new();
     let mut _wins_count = 0u32;
