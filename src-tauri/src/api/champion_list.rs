@@ -57,7 +57,7 @@
     "JarvanIV.png",
     "Elise.png",
     "Orianna.png",
-    "Wukong.png",
+    "MonkeyKing.png",
     "Brand.png",
     "LeeSin.png",
     "Vayne.png",
