@@ -25,5 +25,5 @@ pub fn timestamp_to_datetime(ts_millis: Option<i64>) -> DateTime<Utc> {
 }
 
 pub fn kda_string(k: i64, d: i64, a: i64) -> String {
-    format!("{}/{}/{}", k, d, a)
+    format!("{k}/{d}/{a}")
 }

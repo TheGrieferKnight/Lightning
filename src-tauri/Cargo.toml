@@ -28,4 +28,5 @@ base64 = "0.22.1"
 chrono = { version = "0.4.41", features = ["serde"] }
 rusqlite = {version = "0.37.0", features = ["bundled"] }
 anyhow = "1.0.99"
+cargo-watch = "8.5.3"
 

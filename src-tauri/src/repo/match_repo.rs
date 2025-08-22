@@ -118,7 +118,7 @@ pub fn store_match_full(
                  VALUES (?1, ?2, ?3, ?4, ?5)",
                             params![&match_id, team_id, name, first, kills],
                         )
-                        .with_context(|| format!("upsert match_team_objectives {}", name))?;
+                        .with_context(|| format!("upsert match_team_objectives {name}"))?;
                     }
                     Ok(())
                 };

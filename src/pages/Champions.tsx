@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { mockChampionTierList } from "../data/mockChampionData";
 import { ChampionRole, ChampionTierData } from "../types/champions";
 
@@ -121,7 +121,16 @@ export default function ChampionsPage() {
                 </td>
               </tr>
             ))}
-            <p className="font-bold font-"> IN DEVELOPMENT, COMING SOON</p>
+
+            {/* ✅ Correct way */}
+            <tr>
+              <td
+                colSpan={8}
+                className="text-center font-bold py-4 text-cyan-300"
+              >
+                IN DEVELOPMENT, COMING SOON
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>

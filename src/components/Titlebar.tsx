@@ -1,8 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Minus, Square, Copy, X } from "lucide-react";
-import { getCurrentWindow, type ResizeDirection } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const win = getCurrentWindow();
+
+type ResizeDirection =
+  | "North"
+  | "South"
+  | "East"
+  | "West"
+  | "NorthEast"
+  | "NorthWest"
+  | "SouthEast"
+  | "SouthWest";
 
 export const Titlebar: React.FC = () => {
   const [isMax, setIsMax] = useState(false);
@@ -108,7 +118,7 @@ function TitlebarBtn({
   );
 }
 
-const ResizeHandles: React.FC = () => {
+export const ResizeHandles: React.FC = () => {
   const start = async (edge: ResizeDirection) => {
     try {
       await win.startResizeDragging(edge);

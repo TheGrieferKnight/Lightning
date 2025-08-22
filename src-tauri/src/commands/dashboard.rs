@@ -12,7 +12,7 @@ pub async fn get_dashboard_data(
     match build_dashboard(app, summoner_name).await {
         Ok(data) => Ok(data),
         Err(e) => {
-            eprintln!("[get_dashboard_data] ERROR: {:?}", e);
+            eprintln!("[get_dashboard_data] ERROR: {e:?}");
             Err(e.to_string())
         }
     }

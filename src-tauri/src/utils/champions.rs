@@ -5,5 +5,5 @@ pub fn champion_name_from_id(id: u32) -> String {
     champion_data_map()
         .get(&id)
         .cloned()
-        .unwrap_or_else(|| format!("Unknown({})", id))
+        .unwrap_or_else(|| format!("Unknown({id})"))
 }

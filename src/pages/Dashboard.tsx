@@ -76,12 +76,18 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="relative max-w-7xl mx-auto px-6 py-10 space-y-10">
+      {/* Animated border */}
+      <div
+        className="absolute inset-0 pointer-events-none z-0 rounded-3xl border-4 border-transparent bg-gradient-to-r from-cyan-500/30 via-blue-500/20 to-indigo-500/30 animate-gradient-move"
+        style={{ filter: "blur(6px)" }}
+      />
       {/* Profile */}
-      <SummonerProfile summoner={summoner} />
-
+      <div className="relative z-10">
+        <SummonerProfile summoner={summoner} />
+      </div>
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <StatCard
           icon={Trophy}
           title="Win Rate"
@@ -116,7 +122,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* Match History */}
         <div className="lg:col-span-2">
           <div

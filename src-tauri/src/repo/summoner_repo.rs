@@ -3,6 +3,7 @@ use rusqlite::{params, Transaction};
 
 use crate::types::data_objects::LeagueEntryDTO;
 
+#[allow(clippy::too_many_arguments)]
 pub fn upsert_summoner(
     tx: &Transaction,
     puuid: &str,

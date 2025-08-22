@@ -1,6 +1,6 @@
-import React from "react";
+// src/App.tsx
 import {
-  BrowserRouter as Router,
+  HashRouter as Router, // ✅ use HashRouter
   Routes,
   Route,
   Navigate,

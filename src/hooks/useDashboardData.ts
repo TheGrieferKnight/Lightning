@@ -12,6 +12,7 @@ export const useDashboardData = (summonerName?: string) => {
     try {
       setLoading(true);
       setError(null);
+      console.log("stuff");
 
       let name = summonerName;
       if (!name) {

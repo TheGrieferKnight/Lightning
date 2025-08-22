@@ -283,3 +283,20 @@ button:active {
   box-shadow: 0 0 0.5rem rgba(56, 189, 248, 0.35),
     0 0 1.25rem rgba(56, 189, 248, 0.2);
 }
+
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-move {
+  background-size: 200% 200%;
+  animation: gradient-move 8s ease-in-out infinite;
+}

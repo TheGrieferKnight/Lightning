@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { AppSettings } from "../types/settings";
 import { mockSettings } from "../data/mockSettings";
 

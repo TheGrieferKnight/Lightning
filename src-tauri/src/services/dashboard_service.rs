@@ -313,16 +313,8 @@ pub async fn build_dashboard(
         let duration_secs = compute_match_duration_seconds(&match_data.info);
         let ts = timestamp_to_datetime(match_data.info.game_start_timestamp);
 
-        let match_details: MatchDetails;
-
-        let mut team1_kda: Vec<u16> = Vec::new();
-        team1_kda.push(0);
-        team1_kda.push(0);
-        team1_kda.push(0);
-        let mut team2_kda: Vec<u16> = Vec::new();
-        team2_kda.push(0);
-        team2_kda.push(0);
-        team2_kda.push(0);
+        let mut team1_kda: Vec<u16> = vec![0, 0, 0];
+        let mut team2_kda: Vec<u16> = vec![0, 0, 0];
 
         let mut team1_gold = 0;
         let mut team1_towers = 0;
@@ -369,7 +361,7 @@ pub async fn build_dashboard(
                         team1_kda[0] += p.kills.unwrap_or(0);
                         team1_kda[1] += p.deaths.unwrap_or(0);
                         team1_kda[2] += p.assists.unwrap_or(0);
-                        team1_gold += p.gold_earned.unwrap_or(0) as u32;
+                        team1_gold += p.gold_earned.unwrap_or(0);
                     }
                     if p.team_id.unwrap_or(0) == 200 {
                         team2_towers += p.turret_kills.unwrap_or(0);
@@ -377,15 +369,11 @@ pub async fn build_dashboard(
                         team2_kda[0] += p.kills.unwrap_or(0);
                         team2_kda[1] += p.deaths.unwrap_or(0);
                         team2_kda[2] += p.assists.unwrap_or(0);
-                        team2_gold += p.gold_earned.unwrap_or(0) as u32;
+                        team2_gold += p.gold_earned.unwrap_or(0);
                     }
 
                     all_participants.push(participant);
                 }
-
-                // Now you can use total_gold and total_kills
-                println!("Team 1 Gold: {team1_gold}, Team 1 Kills: {team1_kda:?}");
-                println!("Team 2 Gold: {team2_gold}, Team 2 Kills: {team2_kda:?}");
 
                 // split into two teams of 5
                 if all_participants.len() == 10 {
@@ -411,15 +399,13 @@ pub async fn build_dashboard(
             None => None,
         };
 
-        match_details = MatchDetails {
+        let match_details: MatchDetails = MatchDetails {
             teams: teams.unwrap(),
-            towers_destroyed: [team1_towers as u8, team2_towers as u8],
-            inhibitors_destroyed: [team1_inhibitors as u8, team2_inhibitors as u8],
+            towers_destroyed: [team1_towers, team2_towers],
+            inhibitors_destroyed: [team1_inhibitors, team2_inhibitors],
             gold_earned: [team1_gold, team2_gold],
             team_kda: [team1_kda.try_into().unwrap(), team2_kda.try_into().unwrap()],
         };
-
-        println!("{match_details:?}");
 
         let m = Match {
             match_id: match_data.metadata.match_id.clone(),
@@ -436,7 +422,7 @@ pub async fn build_dashboard(
             // src-tauri/src/commands/dashboard/service.rs (continued)
             timestamp: ts.format("%Y-%m-%d %H:%M").to_string(),
             cs,
-            match_details: match_details,
+            match_details,
         };
 
         matches.push(m);
@@ -462,7 +448,7 @@ pub async fn build_dashboard(
             .map(|m| {
                 let parts: Vec<&str> = m.duration.split(':').collect();
                 let mins = parts
-                    .get(0)
+                    .first()
                     .and_then(|s| s.parse::<u64>().ok())
                     .unwrap_or(0);
                 let secs = parts
@@ -535,7 +521,7 @@ pub async fn build_dashboard(
         total_games,
         &favorite_role,
         champion_mastery
-            .get(0)
+            .first()
             .map(|c| c.name.as_str())
             .unwrap_or(""),
         now,
@@ -562,7 +548,7 @@ pub async fn build_dashboard(
             recent_games: total_games,
             favorite_role,
             main_champion: champion_mastery
-                .get(0)
+                .first()
                 .map(|c| c.name.clone())
                 .unwrap_or_default(),
         },

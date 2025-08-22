@@ -19,10 +19,10 @@ pub fn init_database(app: &tauri::AppHandle) -> anyhow::Result<Connection> {
 
     if let Some(parent) = db_path.parent() {
         std::fs::create_dir_all(parent)
-            .with_context(|| format!("create app data dir {:?}", parent))?;
+            .with_context(|| format!("create app data dir {parent:?}"))?;
     }
 
-    let conn = Connection::open(&db_path).with_context(|| format!("open db {:?}", db_path))?;
+    let conn = Connection::open(&db_path).with_context(|| format!("open db {db_path:?}"))?;
 
     conn.execute_batch(
         r#"

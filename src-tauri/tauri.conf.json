@@ -36,7 +36,7 @@
         "shadow": true,
         "url": "SummonerSpellTracker.html",
         "transparent": true,
-        "skipTaskbar": true
+        "skipTaskbar": false
       }
     ],
     "security": {
