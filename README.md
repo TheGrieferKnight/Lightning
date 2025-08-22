@@ -61,26 +61,26 @@ git clone https://github.com/TheGrieferKnight/Lightning.git
 cd Lightning
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build for production
-npm run tauri build
+pnpm run tauri build
 ```
 
 ## 🛠️ Development
 
 ```bash
 # Run in development mode with hot reload
-npm run tauri dev
+pnpm run tauri dev
 
 # Run frontend only (for UI development)
-npm run dev
+pnpm run dev
 
 # Build frontend assets
-npm run build
+pnpm run build
 
 # Run tests
-npm test
+pnpm test
 ```
 
 ## 🏗️ Tech Stack
@@ -140,9 +140,9 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 
 ### 🔄 Current Focus
 
-- [ ] Core dashboard implementation
-- [ ] Match history integration with Riot API
-- [ ] Basic champion mastery display
+- [x] Core dashboard implementation
+- [x] Match history integration with Riot API
+- [x] Basic champion mastery display
 
 ### 🎯 Upcoming Features
 
