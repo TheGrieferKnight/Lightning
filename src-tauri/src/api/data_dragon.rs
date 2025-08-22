@@ -1,46 +1,43 @@
+use anyhow::Result;
+use futures::future::try_join_all;
 use reqwest;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tauri::Manager;
 use tokio::fs::{self, File};
 use tokio::io::AsyncWriteExt;
+use tracing::{error, info};
 
 /// Downloads an image from Data Dragon and saves it to the app's data directory.
 pub async fn download_image(
     app: &tauri::AppHandle,
     url: &str,
-    filename: &str,
-    subfolder: &str,
-) -> Result<(), String> {
-    let full_url = format!("{url}{filename}.png");
-    let response = reqwest::get(&full_url)
-        .await
-        .map_err(|e| format!("Failed to fetch image: {e}"))?;
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|e| format!("Failed to read image bytes: {e}"))?;
+    filename: &Path,
+    subfolder: &Path,
+) -> Result<()> {
+    let filename_str = filename.to_string_lossy();
 
-    let app_data_dir: PathBuf = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data dir: {e}"))?;
+    let full_url = format!("{url}{filename_str}.png");
+    let response = reqwest::get(&full_url).await?;
+    let bytes = response.bytes().await?;
 
-    let full_path = app_data_dir.join(format!("assets/{subfolder}/{filename}.png"));
-    println!("{full_path:?}");
+    let app_data_dir: PathBuf = app.path().app_data_dir()?;
+
+    let full_path = app_data_dir
+        .join("assets")
+        .join(subfolder)
+        .join(filename)
+        .with_extension("png");
+
+    info!("The images will be downloaded to: {full_path:?}");
+
     if let Some(parent) = full_path.parent() {
-        fs::create_dir_all(parent)
-            .await
-            .map_err(|e| format!("Failed to create directory: {e}"))?;
+        fs::create_dir_all(parent).await?;
     }
 
-    let mut file = File::create(&full_path)
-        .await
-        .map_err(|e| format!("Failed to create file: {e}"))?;
-    file.write_all(&bytes)
-        .await
-        .map_err(|e| format!("Failed to write file: {e}"))?;
+    let mut file = File::create(&full_path).await?;
+    file.write_all(&bytes).await?;
 
-    println!("Downloaded image: {filename}");
+    info!("Succesfully downloaded image: {}", filename.display());
     Ok(())
 }
 
@@ -48,23 +45,21 @@ pub async fn download_image(
 #[tauri::command]
 pub async fn get_image_path(
     app: tauri::AppHandle,
-    subfolder: &str,
-    name: &str,
+    subfolder: &Path,
+    name: &Path,
 ) -> Result<String, String> {
     let app_data_dir: PathBuf = app
         .path()
         .app_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {e}"))?;
 
-    Ok(format!(
-        "{}/assets/{}/{}.png",
-        app_data_dir
-            .into_os_string()
-            .into_string()
-            .unwrap_or_default(),
-        subfolder,
-        name
-    ))
+    let path = app_data_dir
+        .join("assets")
+        .join(subfolder)
+        .join(name)
+        .with_extension("png");
+
+    Ok(path.to_string_lossy().into_owned())
 }
 
 /// Downloads all necessary static assets from Data Dragon.
@@ -92,14 +87,24 @@ pub async fn download_necessary_files(app: tauri::AppHandle) {
         "Summoner_UltBookSmitePlaceholder.png",
     ];
 
-    for filename in spell_files {
-        let _ = download_image(&app, spell_url, filename, "summoner_spells").await;
-    }
+    let spell_subfolder: &Path = Path::new("summoner_spells");
+
+    let spell_tasks = spell_files.iter().map(|s| {
+        let filename = Path::new(s);
+        download_image(&app, spell_url, filename, spell_subfolder)
+    });
 
     let champ_url = "https://ddragon.leagueoflegends.com/cdn/15.15.1/img/champion/";
     let champ_files = include!("champion_list.rs"); // Move champion list to a separate file for cleanliness
 
-    for filename in champ_files {
-        let _ = download_image(&app, champ_url, filename, "champion_squares").await;
-    }
+    let champ_subfolder: &Path = Path::new("champion_squares");
+
+    let champ_tasks = champ_files.iter().map(|s| {
+        let filename = Path::new(s);
+        download_image(&app, champ_url, filename, champ_subfolder)
+    });
+
+    if let Err(e) = try_join_all(spell_tasks.chain(champ_tasks)).await {
+        error!("At least one image download failed: {e}");
+    };
 }
