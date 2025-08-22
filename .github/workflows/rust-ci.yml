@@ -20,10 +20,10 @@ jobs:
       - name: Navigate to src-tauri
         run: cd src-tauri\
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --verbose --manifest-path src-tauri\Cargo.toml
       - name: Test
-        run: cargo test --verbose
+        run: cargo test --verbose --manifest-path src-tauri\Cargo.toml
       - name: Clippy
-        run: cargo clippy --verbose -- -D warnings
+        run: cargo clippy --verbose -- -D warnings --manifest-path src-tauri\Cargo.toml
       - name: Audit
-        run: cargo audit
+        run: cargo audit --manifest-path src-tauri\Cargo.toml
