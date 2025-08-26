@@ -11,7 +11,7 @@ export interface MatchHistoryItemProps{
 
 /* -------------------- Champion Mastery -------------------- */
 export interface ChampionMastery {
-  icon: React.ReactNode;
+  icon: number;
   name: string;
   level: number;
   points: number;
@@ -19,6 +19,7 @@ export interface ChampionMastery {
 
 export interface ChampionMasteryCardProps {
   champion: ChampionMastery;
+  path: string;
 }
 
 /* -------------------- Stat Cards -------------------- */

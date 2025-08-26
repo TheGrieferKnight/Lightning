@@ -176,7 +176,7 @@ export default function DashboardPage() {
             </h3>
             <div className="space-y-3">
               {championMastery.map((champion) => (
-                <ChampionMasteryCard key={champion.name} champion={champion} />
+                <ChampionMasteryCard key={champion.name} champion={champion} path={imagePath} />
               ))}
             </div>
           </div>
