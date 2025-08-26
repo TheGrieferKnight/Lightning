@@ -4,7 +4,6 @@
 )]
 
 mod api;
-mod clients;
 mod commands;
 mod config;
 mod data;

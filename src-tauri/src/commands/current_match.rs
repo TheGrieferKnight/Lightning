@@ -1,20 +1,32 @@
 use crate::api::lcu::{get_game_name_simple, get_tag_line_simple};
-use crate::api::riot::{fetch_data, fetch_puuid};
-use crate::types::{match_data::Participant, response::Responses};
+use crate::api::riot::{fetch_data, fetch_puuid, DataToFetch};
+use crate::types::{match_data::CurrentGameParticipant, response::Responses};
 
 #[tauri::command]
 pub async fn get_current_summoner(_app: tauri::AppHandle) -> Result<String, String> {
-    let game_name = get_game_name_simple().await?;
-    let tag_line = get_tag_line_simple().await?;
+    let game_name = get_game_name_simple()
+        .await
+        .map_err(|e| format!("Error fetching PUUID: {e}"))?;
+
+    let tag_line = get_tag_line_simple()
+        .await
+        .map_err(|e| format!("Error fetching PUUID: {e}"))?;
+
     let summoner_name = format!("{game_name}#{tag_line}");
+
     Ok(summoner_name)
 }
 
 /// Get the current player's participant data.
 #[tauri::command]
-pub async fn get_current_player(app: tauri::AppHandle) -> Result<Participant, String> {
-    let puuid = fetch_puuid(&app).await?;
-    let match_data_response = fetch_data(&app, "CurrentMatch").await?;
+pub async fn get_current_player(app: tauri::AppHandle) -> Result<CurrentGameParticipant, String> {
+    let puuid = fetch_puuid(&app)
+        .await
+        .map_err(|e| format!("Error fetching PUUID: {e}"))?;
+
+    let match_data_response = fetch_data(&app, DataToFetch::CurrentMatch)
+        .await
+        .map_err(|e| format!("Error fetching current match : {e}"))?;
 
     let match_data = match match_data_response {
         Responses::Match(data) => data,
@@ -31,19 +43,27 @@ pub async fn get_current_player(app: tauri::AppHandle) -> Result<Participant, St
 /// Get the current match data.
 #[tauri::command]
 pub async fn get_match_data(app: tauri::AppHandle) -> Result<Responses, String> {
-    fetch_data(&app, "CurrentMatch").await
+    fetch_data(&app, DataToFetch::CurrentMatch)
+        .await
+        .map_err(|e| format!("Error fetching current match: {e}"))
 }
 
 /// Get summoner spells for the player's team.
 #[tauri::command]
 pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32, u32)>, String> {
-    let puuid = fetch_puuid(&app).await?;
+    let puuid = fetch_puuid(&app)
+        .await
+        .map_err(|e| format!("Error fetching PUUID: {e}"))?;
+
     /*
     let puuid = String::from(
         "sWa0-CXDSMK9arBkxHP-AN-dh4vSiJkmnO_SF0NuPYtI5NvLNm6mvl1OOC6AO8VcBe7SDKJmOUJtjw",
     );
     */
-    let match_data_response = fetch_data(&app, "CurrentMatch").await?;
+
+    let match_data_response = fetch_data(&app, DataToFetch::CurrentMatch)
+        .await
+        .map_err(|e| format!("Error fetching current match : {e}"))?;
 
     let match_data = match match_data_response {
         Responses::Match(data) => data,

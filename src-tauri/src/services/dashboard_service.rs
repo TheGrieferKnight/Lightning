@@ -4,7 +4,7 @@ use chrono::Utc;
 use rusqlite::{params, OptionalExtension, TransactionBehavior};
 use std::path::Path;
 
-use crate::clients::riot as riot_client;
+use crate::api::riot as riot_client;
 use crate::config::{DASHBOARD_RECENT_MATCH_COUNT, TTL_DASHBOARD_SECS, TTL_SUMMONER_FIELDS_SECS};
 use crate::db::init::{get_app_data_dir_only, init_database};
 use crate::error::AppResult;
@@ -142,20 +142,21 @@ fn load_dashboard_from_cache(
     let (total_games, avg_game_time) = stats_row.unwrap_or((recent_games, "0:00".into()));
 
     let mut mastery_stmt = conn.prepare(
-        "SELECT name, level, points, icon
-     FROM champion_mastery
-     WHERE puuid = ?1
-     ORDER BY rank_order ASC",
+        "SELECT champion_id, champion_level, champion_points, icon
+       FROM champion_mastery
+       WHERE puuid = ?1
+       ORDER BY rank_order ASC",
     )?;
     let mastery_iter = mastery_stmt.query_map(params![puuid], |r| {
+        let champ_id: i64 = r.get(0)?;
         Ok(ChampionMastery {
-            name: r.get::<_, String>(0)?,
+            name: crate::utils::champions::champion_name_from_id(champ_id as u32),
             level: r.get::<_, i64>(1)? as u32,
             points: r.get::<_, i64>(2)? as u32,
             icon: r.get::<_, String>(3)?,
         })
     })?;
-    let champion_mastery = mastery_iter
+    let champion_mastery: Vec<ChampionMastery> = mastery_iter
         .collect::<Result<Vec<_>, _>>()
         .context("collect mastery")?;
 
@@ -252,7 +253,7 @@ pub async fn build_dashboard(
     }
 
     if level == 0 || profile_icon_id == 0 || profile_icon_path.is_empty() {
-        let sv = riot_client::fetch_summoner_basic(&app, &puuid).await?;
+        let sv = riot_client::fetch_summoner_basic(&puuid).await?;
         if let Some(api_name) = sv["name"].as_str() {
             display_name = api_name.to_string();
         }
@@ -278,11 +279,10 @@ pub async fn build_dashboard(
         }
     }
 
-    let entries = riot_client::fetch_league_entries(&app, &puuid).await?;
+    let entries = riot_client::fetch_league_entries(&puuid).await?;
     let solo_entry = find_ranked_solo_or_default(&entries);
 
-    let match_ids =
-        riot_client::fetch_match_ids(&app, &puuid, DASHBOARD_RECENT_MATCH_COUNT).await?;
+    let match_ids = riot_client::fetch_match_ids(&puuid, DASHBOARD_RECENT_MATCH_COUNT).await?;
 
     println!("{match_ids:?}");
 
@@ -291,7 +291,7 @@ pub async fn build_dashboard(
     let mut role_counts: std::collections::HashMap<String, u32> = std::collections::HashMap::new();
 
     for mid in match_ids {
-        let (match_data, match_json) = riot_client::fetch_match_by_id(&app, &mid).await?;
+        let (match_data, match_json) = riot_client::fetch_match_by_id(&mid).await?;
 
         match_repo::store_match_full(&conn, &match_data, &match_json, now)?;
 
@@ -470,16 +470,17 @@ pub async fn build_dashboard(
     };
 
     // Champion Mastery (top)
-    let mastery_values = riot_client::fetch_top_mastery(&app, &puuid).await?;
+    let mastery_values = riot_client::fetch_top_mastery(&puuid).await?;
+
     let icons = ["🎯", "🔫", "🏹", "✨"];
     let mut champion_mastery = Vec::new();
     for (i, m) in mastery_values.iter().take(4).enumerate() {
-        let champ_id = m["championId"].as_u64().unwrap_or(0) as u32;
+        let champ_id = m.champion_id as u32;
         champion_mastery.push(ChampionMastery {
             name: champion_name_from_id(champ_id),
-            level: m["championLevel"].as_u64().unwrap_or(0) as u32,
-            points: m["championPoints"].as_u64().unwrap_or(0) as u32,
-            icon: icons.get(i).copied().unwrap_or("✨").to_string(),
+            level: m.champion_level as u32,
+            points: m.champion_points as u32,
+            icon: icons.get(i).copied().unwrap_or("🏹").to_string(),
         });
     }
 
@@ -533,7 +534,7 @@ pub async fn build_dashboard(
     )?;
 
     stats_repo::upsert_stats(&tx, &puuid, total_games, &avg_game_time, now)?;
-    mastery_repo::replace_masteries(&tx, &puuid, &champion_mastery, now)?;
+    mastery_repo::replace_masteries(&tx, &puuid, &mastery_values, now)?;
     live_game_repo::upsert_live(&tx, &puuid, &live_game, now)?;
 
     for m in &matches {

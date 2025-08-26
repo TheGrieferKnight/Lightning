@@ -1,184 +1,149 @@
-use crate::api::lcu;
-use crate::types::{
-    match_data::MatchData,
-    response::{PuuidData, Responses},
-};
-use crate::utils::file::{load_puuid, save_puuid};
-use anyhow::{Context, Result};
+use anyhow::Result;
+use serde::de::DeserializeOwned;
+use tauri::AppHandle;
 
-/// Fetch the player's PUUID from Riot API and save it locally.
-pub async fn fetch_puuid(app: &tauri::AppHandle) -> Result<String> {
-    // Try loading from file first
-    if let Ok(puuid) = load_puuid(app).await {
-        return Ok(puuid);
+use crate::config::PLATFORM_REGION;
+use crate::types::data_objects::{LeagueEntryDTO, MatchDto};
+use crate::types::match_data::CurrentGameInfo;
+use crate::types::response::{ChampionMasteryDto, PuuidData, Responses, SummonerNameData};
+use crate::types::riot_api_client::RiotApiClient;
+
+/// Enum for selecting which data to fetch.
+#[allow(dead_code)]
+#[derive(Debug, Clone, Copy)]
+pub enum DataToFetch {
+    CurrentMatch,
+    Mastery,
+    Puuid,
+    SummonerName,
+}
+
+/// Private helper: get PUUID (cached or fetch from Riot API).
+async fn get_puuid(app: &AppHandle) -> Result<PuuidData> {
+    // 1. Try loading from file
+    if let Ok(puuid_data) = crate::utils::file::load_puuid(app).await {
+        return Ok(puuid_data);
     }
 
-    let url = "https://riot-api-proxy-lightnings-projects-ba45f9d4.vercel.app/api/riot";
-    let region = "europe".to_string();
+    // 2. Otherwise fetch from Riot API
+    const REGION: &str = "europe";
+    let client = RiotApiClient::new();
 
-    let game_name = lcu::get_game_name_simple().await?;
-
-    let tag_line = lcu::get_tag_line_simple().await?;
+    let game_name = crate::api::lcu::get_game_name_simple().await?;
+    let tag_line = crate::api::lcu::get_tag_line_simple().await?;
 
     let endpoint = format!("/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}");
-    let payload = serde_json::json!({
-        "endpoint": endpoint,
-        "region": region
-    });
+    let payload = serde_json::json!({ "endpoint": endpoint, "region": REGION });
 
-    let client = reqwest::Client::new();
-    let response = client
-        .post(url)
-        .header(
-            "x-vercel-protection-bypass",
-            "4gSz0EXtXJyTt7cxfCCH46mlH24t1J6l",
-        )
-        .json(&payload)
-        .send()
-        .await?;
-
-    let status = response.status();
-
-    let body = response
-        .text()
-        .await
-        .context("Failed to read response body")?;
-
-    if !status.is_success() {
-        anyhow::bail!("PUUID fetch error {status}: {body}");
-    }
-
-    let puuid_data: PuuidData =
-        serde_json::from_str(&body).context("Failed to parse PUUID JSON")?;
-
-    save_puuid(app, &puuid_data.puuid).await;
-    Ok(puuid_data.puuid)
+    let puuid_data: PuuidData = client.post_json(payload).await?;
+    crate::utils::file::save_puuid(app, &puuid_data).await?;
+    Ok(puuid_data)
 }
 
-/// Fetch various data from Riot API.
-pub async fn fetch_data(app: &tauri::AppHandle, data_to_fetch: &str) -> Result<Responses, String> {
-    let game_region = "euw1".to_string();
-    let region = "europe".to_string();
-    let url = "https://riot-api-proxy-lightnings-projects-ba45f9d4.vercel.app/api/riot";
+/// Fetch the player's PUUID string (shortcut).
+pub async fn fetch_puuid(app: &AppHandle) -> Result<String> {
+    Ok(get_puuid(app).await?.puuid)
+}
 
-    let puuid = fetch_puuid(app)
-        .await
-        .map_err(|e| format!("Error fetching puuid: {e}"))?;
-    let payload;
+/// Fetch raw JSON from Riot API via proxy.
+pub async fn fetch_raw(endpoint: &str, region: &str) -> Result<String> {
+    let client = RiotApiClient::new();
+    let payload = serde_json::json!({ "endpoint": endpoint, "region": region });
+    client.post_raw(payload).await
+}
 
-    /*
-    puuid = String::from(
-        "sWa0-CXDSMK9arBkxHP-AN-dh4vSiJkmnO_SF0NuPYtI5NvLNm6mvl1OOC6AO8VcBe7SDKJmOUJtjw",
-    );
-    */
+/// Generic helper to fetch and deserialize JSON.
+async fn fetch_json<T: DeserializeOwned>(endpoint: &str, region: &str) -> Result<T> {
+    let client = RiotApiClient::new();
+    let payload = serde_json::json!({ "endpoint": endpoint, "region": region });
+    client.post_json(payload).await
+}
+
+/// Fetch summoner basic info.
+pub async fn fetch_summoner_basic(puuid: &str) -> Result<serde_json::Value> {
+    let endpoint = format!("/lol/summoner/v4/summoners/by-puuid/{puuid}");
+    fetch_json(&endpoint, PLATFORM_REGION).await
+}
+
+/// Fetch ranked league entries.
+pub async fn fetch_league_entries(puuid: &str) -> Result<Vec<LeagueEntryDTO>> {
+    let endpoint = format!("/lol/league/v4/entries/by-puuid/{puuid}");
+    fetch_json(&endpoint, PLATFORM_REGION).await
+}
+
+/// Fetch recent match IDs.
+pub async fn fetch_match_ids(puuid: &str, count: usize) -> Result<Vec<String>> {
+    let endpoint =
+        format!("/lol/match/v5/matches/by-puuid/{puuid}/ids?type=ranked&start=0&count={count}");
+    fetch_json(&endpoint, PLATFORM_REGION).await
+}
+
+/// Fetch a match by ID.
+pub async fn fetch_match_by_id(match_id: &str) -> Result<(MatchDto, String)> {
+    let endpoint = format!("/lol/match/v5/matches/{match_id}");
+    let json = fetch_raw(&endpoint, PLATFORM_REGION).await?;
+    let dto: MatchDto = serde_json::from_str(&json)?;
+    Ok((dto, json))
+}
+
+/// Fetch top champion mastery.
+pub async fn fetch_top_mastery(puuid: &str) -> Result<Vec<ChampionMasteryDto>> {
+    let endpoint =
+        format!("/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}/top?count=4");
+    fetch_json(&endpoint, PLATFORM_REGION).await
+}
+
+/// Fetch current live match (if any).
+pub async fn fetch_current_match(app: &AppHandle) -> Result<Option<CurrentGameInfo>> {
+    match fetch_data(app, DataToFetch::CurrentMatch).await {
+        Ok(Responses::Match(data)) => Ok(Some(data)),
+        Ok(_) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
+/// Fetch various data from Riot API (wrapper for Responses).
+pub async fn fetch_data(app: &AppHandle, data_to_fetch: DataToFetch) -> Result<Responses> {
+    const GAME_REGION: &str = "euw1";
+    let client = RiotApiClient::new();
 
     match data_to_fetch {
-        "CurrentMatch" => {
-            let endpoint = format!("/lol/spectator/v5/active-games/by-summoner/{puuid}");
-            payload = serde_json::json!({ "endpoint": endpoint, "region": game_region });
+        DataToFetch::SummonerName => {
+            let game_name = crate::api::lcu::get_game_name_simple().await?;
+            let tag_line = crate::api::lcu::get_tag_line_simple().await?;
+            Ok(Responses::SummonerName(SummonerNameData {
+                game_name,
+                tag_line,
+            }))
         }
-        "Mastery" => {
-            let endpoint =
-                format!("/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}/top");
-            payload = serde_json::json!({ "endpoint": endpoint, "region": game_region });
-        }
-        "Puuid" => {
-            let game_name = lcu::get_game_name_simple()
-                .await
-                .map_err(|e| e.to_string())?;
 
-            let tag_line = lcu::get_tag_line_simple()
-                .await
-                .map_err(|e| e.to_string())?;
-            let endpoint = format!("/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}");
-            payload = serde_json::json!({ "endpoint": endpoint, "region": region });
-        }
-        "SummonerName" => {
-            let game_name = lcu::get_game_name_simple()
-                .await
-                .map_err(|e| e.to_string())?;
-
-            let tag_line = lcu::get_tag_line_simple()
-                .await
-                .map_err(|e| e.to_string())?;
-            payload = serde_json::json!({"SummonerName" : format!("{game_name}#{tag_line}")});
-        }
-        _ => {
-            return Err(format!("Unknown data type: {data_to_fetch}"));
-        }
-    }
-
-    let client = reqwest::Client::new();
-    let response = client
-        .post(url)
-        .header(
-            "x-vercel-protection-bypass",
-            "4gSz0EXtXJyTt7cxfCCH46mlH24t1J6l",
-        )
-        .json(&payload)
-        .send()
-        .await
-        .map_err(|e| format!("Request failed: {e}"))?;
-
-    let status = response.status();
-    if !status.is_success() {
-        let error_text = response.text().await.unwrap_or_default();
-        return Err(format!("HTTP error {status}: {error_text}"));
-    }
-
-    let response_text = response
-        .text()
-        .await
-        .map_err(|e| format!("Failed to read response: {e}"))?;
-
-    match data_to_fetch {
-        "Puuid" => {
-            let puuid_data: PuuidData = serde_json::from_str(&response_text)
-                .map_err(|e| format!("Failed to parse PUUID JSON: {e}"))?;
-            save_puuid(app, &puuid_data.puuid).await?;
+        DataToFetch::Puuid => {
+            let puuid_data = get_puuid(app).await?;
             Ok(Responses::Puuid(puuid_data))
         }
-        "CurrentMatch" => {
-            let match_data: MatchData = serde_json::from_str(&response_text)
-                .map_err(|e| format!("Failed to parse MatchData: {e}"))?;
+
+        DataToFetch::CurrentMatch => {
+            let puuid_data = get_puuid(app).await?;
+            let endpoint = format!(
+                "/lol/spectator/v5/active-games/by-summoner/{}",
+                puuid_data.puuid
+            );
+            let payload = serde_json::json!({ "endpoint": endpoint, "region": GAME_REGION });
+
+            let match_data: CurrentGameInfo = client.post_json(payload).await?;
             Ok(Responses::Match(match_data))
         }
-        _ => Err(format!("Unknown data type: {data_to_fetch}")),
+
+        DataToFetch::Mastery => {
+            let puuid_data = get_puuid(app).await?;
+            let endpoint = format!(
+                "/lol/champion-mastery/v4/champion-masteries/by-puuid/{}/top",
+                puuid_data.puuid
+            );
+            let payload = serde_json::json!({ "endpoint": endpoint, "region": GAME_REGION });
+
+            let mastery_data: Vec<ChampionMasteryDto> = client.post_json(payload).await?;
+            Ok(Responses::Mastery(mastery_data))
+        }
     }
-}
-
-/// Fetch raw JSON from Riot API via your proxy.
-/// This is similar to `fetch_data` but returns the raw JSON string instead of parsing into `Responses`.
-pub async fn fetch_raw(_app: &tauri::AppHandle, endpoint: &str, region: &str) -> Result<String> {
-    let url = "https://riot-api-proxy-lightnings-projects-ba45f9d4.vercel.app/api/riot";
-
-    let payload = serde_json::json!({
-        "endpoint": endpoint,
-        "region": region
-    });
-
-    let client = reqwest::Client::new();
-
-    let response = client
-        .post(url)
-        .header(
-            "x-vercel-protection-bypass",
-            "4gSz0EXtXJyTt7cxfCCH46mlH24t1J6l",
-        )
-        .json(&payload)
-        .send()
-        .await
-        .context("Request failed")?;
-
-    let status = response.status();
-    let body = response
-        .text()
-        .await
-        .context("Failed to read response body")?;
-
-    if !status.is_success() {
-        anyhow::bail!("HTTP error {status} : {body}")
-    }
-
-    Ok(body)
 }

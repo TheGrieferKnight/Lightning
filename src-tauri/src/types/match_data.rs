@@ -3,13 +3,13 @@ use serde_json::Value;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct MatchData {
+pub struct CurrentGameInfo {
     pub game_id: u64,
     pub map_id: u32,
     pub game_mode: String,
     pub game_type: String,
     pub game_queue_config_id: u32,
-    pub participants: Vec<Participant>,
+    pub participants: Vec<CurrentGameParticipant>,
     pub observers: Observers,
     pub platform_id: String,
     pub banned_champions: Vec<BannedChampion>,
@@ -19,7 +19,7 @@ pub struct MatchData {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Participant {
+pub struct CurrentGameParticipant {
     pub puuid: String,
     pub team_id: u32,
     pub spell1_id: u32,
@@ -55,16 +55,16 @@ pub struct BannedChampion {
 }
 
 #[allow(dead_code)]
-impl MatchData {
+impl CurrentGameInfo {
     pub fn is_active(&self) -> bool {
         self.game_length < 0
     }
 
-    pub fn find_participant_by_puuid(&self, puuid: &str) -> Option<&Participant> {
+    pub fn find_participant_by_puuid(&self, puuid: &str) -> Option<&CurrentGameParticipant> {
         self.participants.iter().find(|p| p.puuid == puuid)
     }
 
-    pub fn get_enemy_team(&self, player_puuid: &str) -> Vec<&Participant> {
+    pub fn get_enemy_team(&self, player_puuid: &str) -> Vec<&CurrentGameParticipant> {
         if let Some(player) = self.find_participant_by_puuid(player_puuid) {
             let enemy_team_id = if player.team_id == 100 { 200 } else { 100 };
             return self

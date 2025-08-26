@@ -1,57 +1,40 @@
-use std::fs;
+use crate::types::response::PuuidData;
+use anyhow::{Context, Result};
 use std::path::PathBuf;
 use tauri::Manager;
 
-pub async fn save_puuid(app: &tauri::AppHandle, puuid: &str) -> Result<(), String> {
-    let app_data_dir: PathBuf = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data dir: {e}"))?;
-
-    fs::create_dir_all(&app_data_dir)
-        .map_err(|e| format!("Failed to create app data directory: {e}"))?;
-
-    let puuid_file = app_data_dir.join("puuid.txt");
-    fs::write(puuid_file, puuid).map_err(|e| format!("Failed to write PUUID: {e}"))?;
-
-    Ok(())
+pub async fn save_puuid(app: &tauri::AppHandle, puuid_data: &PuuidData) -> Result<()> {
+    let json = serde_json::to_string(puuid_data)?;
+    save_file(app, "puuid.json", &json).await
 }
 
-#[allow(dead_code)]
-pub async fn save_file(
-    app: &tauri::AppHandle,
-    filename: &str,
-    content: &str,
-) -> Result<(), String> {
-    let app_data_dir: PathBuf = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data dir: {e}"))?;
+pub async fn load_puuid(app: &tauri::AppHandle) -> Result<PuuidData> {
+    let json = load_file(app, "puuid.json").await?;
+    let puuid_data: PuuidData = serde_json::from_str(&json)?;
+    Ok(puuid_data)
+}
 
-    fs::create_dir_all(&app_data_dir)
-        .map_err(|e| format!("Failed to create app data directory: {e}"))?;
-
+pub async fn save_file(app: &tauri::AppHandle, filename: &str, content: &str) -> Result<()> {
+    let app_data_dir = get_app_data_dir(app)?;
+    tokio::fs::create_dir_all(&app_data_dir).await?;
     let file = app_data_dir.join(filename);
-    fs::write(file, content).map_err(|e| format!("Failed to write PUUID: {e}"))?;
-
+    tokio::fs::write(file, content).await?;
     Ok(())
 }
 
-pub async fn load_file(app: &tauri::AppHandle, filename: &str) -> Result<String, String> {
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data dir: {e}"))?;
-
+pub async fn load_file(app: &tauri::AppHandle, filename: &str) -> Result<String> {
+    let app_data_dir = get_app_data_dir(app)?;
     let file_path = app_data_dir.join(filename);
 
-    if file_path.exists() {
-        fs::read_to_string(file_path).map_err(|e| format!("Failed to read file: {e}"))
-    } else {
-        Err(format!("File {filename} not found"))
-    }
+    let contents = tokio::fs::read_to_string(&file_path)
+        .await
+        .with_context(|| format!("Failed to read file {}", file_path.display()))?;
+
+    Ok(contents)
 }
 
-pub async fn load_puuid(app: &tauri::AppHandle) -> Result<String, String> {
-    load_file(app, "puuid.txt").await
+fn get_app_data_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
+    app.path()
+        .app_data_dir()
+        .context("Failed to get app data directory")
 }
