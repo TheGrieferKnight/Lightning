@@ -2,15 +2,21 @@ use crate::api::lcu::{get_game_name_simple, get_tag_line_simple};
 use crate::api::riot::{fetch_data, fetch_puuid, DataToFetch};
 use crate::types::{match_data::CurrentGameParticipant, response::Responses};
 
+trait ToStringErr<T> {
+    fn string_err(self) -> Result<T, String>;
+}
+
+impl<T, E: std::fmt::Display> ToStringErr<T> for Result<T, E> {
+    fn string_err(self) -> Result<T, String> {
+        self.map_err(|e| e.to_string())
+    }
+}
+
 #[tauri::command]
 pub async fn get_current_summoner(_app: tauri::AppHandle) -> Result<String, String> {
-    let game_name = get_game_name_simple()
-        .await
-        .map_err(|e| format!("Error fetching PUUID: {e}"))?;
+    let game_name = get_game_name_simple().await.string_err()?;
 
-    let tag_line = get_tag_line_simple()
-        .await
-        .map_err(|e| format!("Error fetching PUUID: {e}"))?;
+    let tag_line = get_tag_line_simple().await.string_err()?;
 
     let summoner_name = format!("{game_name}#{tag_line}");
 
@@ -20,17 +26,13 @@ pub async fn get_current_summoner(_app: tauri::AppHandle) -> Result<String, Stri
 /// Get the current player's participant data.
 #[tauri::command]
 pub async fn get_current_player(app: tauri::AppHandle) -> Result<CurrentGameParticipant, String> {
-    let puuid = fetch_puuid(&app)
-        .await
-        .map_err(|e| format!("Error fetching PUUID: {e}"))?;
+    let puuid = fetch_puuid(&app).await.string_err()?;
 
-    let match_data_response = fetch_data(&app, DataToFetch::CurrentMatch)
+    let Responses::Match(match_data) = fetch_data(&app, DataToFetch::CurrentMatch)
         .await
-        .map_err(|e| format!("Error fetching current match : {e}"))?;
-
-    let match_data = match match_data_response {
-        Responses::Match(data) => data,
-        _ => return Err("Expected match data".into()),
+        .string_err()?
+    else {
+        return Err("Expected match data".into());
     };
 
     match_data
@@ -42,51 +44,39 @@ pub async fn get_current_player(app: tauri::AppHandle) -> Result<CurrentGamePart
 
 /// Get the current match data.
 #[tauri::command]
-pub async fn get_match_data(app: tauri::AppHandle) -> Result<Responses, String> {
+pub async fn get_current_match_data(app: tauri::AppHandle) -> Result<Responses, String> {
     fetch_data(&app, DataToFetch::CurrentMatch)
         .await
-        .map_err(|e| format!("Error fetching current match: {e}"))
+        .string_err()
 }
 
 /// Get summoner spells for the player's team.
 #[tauri::command]
 pub async fn get_summoner_spells(app: tauri::AppHandle) -> Result<Vec<(u32, u32, u32)>, String> {
-    let puuid = fetch_puuid(&app)
-        .await
-        .map_err(|e| format!("Error fetching PUUID: {e}"))?;
-
-    /*
-    let puuid = String::from(
-        "sWa0-CXDSMK9arBkxHP-AN-dh4vSiJkmnO_SF0NuPYtI5NvLNm6mvl1OOC6AO8VcBe7SDKJmOUJtjw",
-    );
-    */
+    let puuid = fetch_puuid(&app).await.string_err()?;
 
     let match_data_response = fetch_data(&app, DataToFetch::CurrentMatch)
         .await
-        .map_err(|e| format!("Error fetching current match : {e}"))?;
+        .string_err()?;
 
-    let match_data = match match_data_response {
-        Responses::Match(data) => data,
-        _ => return Err("Expected match data".into()),
+    let Responses::Match(match_data) = match_data_response else {
+        return Err("Expected match data".into());
     };
 
-    let participants = match_data.participants.iter();
+    let team_id = match_data
+        .participants
+        .iter()
+        .find(|p| p.puuid == puuid)
+        .map(|p| match p.team_id {
+            100 => 200,
+            200 => 100,
+            _ => 10,
+        })
+        .ok_or_else(|| "Player not found in match".to_string())?;
 
-    let mut team_id = 0;
-
-    for p in participants.clone() {
-        if p.puuid == puuid {
-            team_id = p.team_id;
-        }
-    }
-
-    match team_id {
-        100 => team_id = 200,
-        200 => team_id = 100,
-        _ => team_id = 10,
-    }
-
-    Ok(participants
+    Ok(match_data
+        .participants
+        .iter()
         .filter(|p| p.team_id == team_id)
         .map(|p| (p.champion_id, p.spell1_id, p.spell2_id))
         .collect())
