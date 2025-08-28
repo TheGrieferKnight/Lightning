@@ -19,7 +19,7 @@ pub enum DataToFetch {
 }
 
 /// Private helper: get PUUID (cached or fetch from Riot API).
-async fn get_puuid(app: &AppHandle) -> Result<PuuidData> {
+async fn get_puuid(app: &AppHandle, client: &RiotApiClient) -> Result<PuuidData> {
     // 1. Try loading from file
     if let Ok(puuid_data) = crate::utils::file::load_puuid(app).await {
         return Ok(puuid_data);
@@ -27,7 +27,6 @@ async fn get_puuid(app: &AppHandle) -> Result<PuuidData> {
 
     // 2. Otherwise fetch from Riot API
     const REGION: &str = "europe";
-    let client = RiotApiClient::new();
 
     let game_name = crate::api::lcu::get_game_name_simple().await?;
     let tag_line = crate::api::lcu::get_tag_line_simple().await?;
@@ -42,7 +41,8 @@ async fn get_puuid(app: &AppHandle) -> Result<PuuidData> {
 
 /// Fetch the player's PUUID string (shortcut).
 pub async fn fetch_puuid(app: &AppHandle) -> Result<String> {
-    Ok(get_puuid(app).await?.puuid)
+    let client = RiotApiClient::new();
+    Ok(get_puuid(app, &client).await?.puuid)
 }
 
 /// Fetch raw JSON from Riot API via proxy.
@@ -53,7 +53,10 @@ pub async fn fetch_raw(endpoint: &str, region: &str) -> Result<String> {
 }
 
 /// Generic helper to fetch and deserialize JSON.
-async fn fetch_json<T: DeserializeOwned>(endpoint: &str, region: &str) -> Result<T> {
+async fn fetch_json<T>(endpoint: &str, region: &str) -> Result<T>
+where
+    T: DeserializeOwned,
+{
     let client = RiotApiClient::new();
     let payload = serde_json::json!({ "endpoint": endpoint, "region": region });
     client.post_json(payload).await
@@ -95,11 +98,12 @@ pub async fn fetch_top_mastery(puuid: &str) -> Result<Vec<ChampionMasteryDto>> {
 
 /// Fetch current live match (if any).
 pub async fn fetch_current_match(app: &AppHandle) -> Result<Option<CurrentGameInfo>> {
-    match fetch_data(app, DataToFetch::CurrentMatch).await {
-        Ok(Responses::Match(data)) => Ok(Some(data)),
-        Ok(_) => Ok(None),
-        Err(e) => Err(e),
-    }
+    fetch_data(app, DataToFetch::CurrentMatch)
+        .await
+        .map(|resp| match resp {
+            Responses::Match(data) => Some(data),
+            _ => None,
+        })
 }
 
 /// Fetch various data from Riot API (wrapper for Responses).
@@ -118,12 +122,12 @@ pub async fn fetch_data(app: &AppHandle, data_to_fetch: DataToFetch) -> Result<R
         }
 
         DataToFetch::Puuid => {
-            let puuid_data = get_puuid(app).await?;
+            let puuid_data = get_puuid(app, &client).await?;
             Ok(Responses::Puuid(puuid_data))
         }
 
         DataToFetch::CurrentMatch => {
-            let puuid_data = get_puuid(app).await?;
+            let puuid_data = get_puuid(app, &client).await?;
             let endpoint = format!(
                 "/lol/spectator/v5/active-games/by-summoner/{}",
                 puuid_data.puuid
@@ -135,7 +139,7 @@ pub async fn fetch_data(app: &AppHandle, data_to_fetch: DataToFetch) -> Result<R
         }
 
         DataToFetch::Mastery => {
-            let puuid_data = get_puuid(app).await?;
+            let puuid_data = get_puuid(app, &client).await?;
             let endpoint = format!(
                 "/lol/champion-mastery/v4/champion-masteries/by-puuid/{}/top",
                 puuid_data.puuid
