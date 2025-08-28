@@ -39,6 +39,7 @@ fn find_ranked_solo_or_default(entries: &[LeagueEntryDTO]) -> LeagueEntryDTO {
             inactive: false,
             mini_series: None,
         })
+    // TODO: Consider using Default trait implementation for LeagueEntryDTO if possible instead of manual construction
 }
 
 fn get_participant_by_puuid<'a>(
@@ -51,6 +52,7 @@ fn get_participant_by_puuid<'a>(
         .as_ref()?
         .iter()
         .find(|p| p.puuid.as_deref() == Some(puuid))
+    // TODO: Could use iterator combinators more idiomatically (e.g., flatten) instead of as_ref + ?
 }
 
 // Note: This mirrors your existing cache loading, split for clarity.
@@ -131,6 +133,7 @@ fn load_dashboard_from_cache(
     }
 
     let mini_series = rank_mini_series_json.and_then(|json| serde_json::from_str(&json).ok());
+    // TODO: Consider extracting row parsing into a helper struct with FromRow for readability
 
     let stats_row = conn
         .query_row(
@@ -159,6 +162,7 @@ fn load_dashboard_from_cache(
     let champion_mastery: Vec<ChampionMastery> = mastery_iter
         .collect::<Result<Vec<_>, _>>()
         .context("collect mastery")?;
+    // TODO: Could use iterator adapters and collect directly without intermediate variable
 
     let matches_vec = crate::repo::dashboard_repo::get_dashboard_matches(conn, puuid)?;
 
@@ -204,6 +208,7 @@ pub async fn build_dashboard(
 ) -> AppResult<DashboardData> {
     let mut conn = init_database(&app)?;
     conn.busy_timeout(std::time::Duration::from_secs(5))?;
+    // TODO: Consider extracting DB setup into a helper function
 
     let now = Utc::now().timestamp();
     let image_path = get_app_data_dir_only(&app);
@@ -216,6 +221,7 @@ pub async fn build_dashboard(
        updated_at = excluded.updated_at",
         params![&image_path, now],
     )?;
+    // TODO: Could use UPSERT helper instead of raw SQL string
 
     let puuid = riot_client::fetch_puuid(&app).await?;
 
@@ -228,6 +234,7 @@ pub async fn build_dashboard(
     let mut level: u32 = 0;
     let mut profile_icon_id: u32 = 0;
     let mut profile_icon_path = String::new();
+    // TODO: Consider using Option<T> instead of sentinel values (0, empty string)
 
     if let Some((lvl, icon_id, icon_path, updated_at)) = conn
         .query_row(
@@ -259,6 +266,7 @@ pub async fn build_dashboard(
         }
         level = sv["summonerLevel"].as_u64().unwrap_or(0) as u32;
         profile_icon_id = sv["profileIconId"].as_u64().unwrap_or(0) as u32;
+        // TODO: Consider deserializing into a typed struct instead of indexing JSON
 
         let subfolder = Path::new("profile_icons");
 
@@ -285,6 +293,7 @@ pub async fn build_dashboard(
     let match_ids = riot_client::fetch_match_ids(&puuid, DASHBOARD_RECENT_MATCH_COUNT).await?;
 
     println!("{match_ids:?}");
+    // TODO: Replace println! with proper logging
 
     let mut matches = Vec::new();
     let mut _wins_count = 0u32;
@@ -320,6 +329,7 @@ pub async fn build_dashboard(
 
         let mut team1_kda: Vec<u16> = vec![0, 0, 0];
         let mut team2_kda: Vec<u16> = vec![0, 0, 0];
+        // TODO: Consider using a small struct for KDA instead of Vec<u16>
 
         let mut team1_gold = 0;
         let mut team1_towers = 0;
@@ -327,6 +337,7 @@ pub async fn build_dashboard(
         let mut team2_gold = 0;
         let mut team2_towers = 0;
         let mut team2_inhibitors = 0;
+        // TODO: Group team stats into a struct instead of multiple variables
 
         let teams: Option<[Team; 2]> = match match_data.info.participants {
             Some(participants) => {
@@ -395,6 +406,7 @@ pub async fn build_dashboard(
 
                     let team1: [Participant; 5] = team1.try_into().unwrap();
                     let team2: [Participant; 5] = team2.try_into().unwrap();
+                    // TODO: Avoid unwrap on try_into, handle error gracefully
 
                     Some([team1, team2])
                 } else {
@@ -406,10 +418,12 @@ pub async fn build_dashboard(
 
         let match_details: MatchDetails = MatchDetails {
             teams: teams.unwrap(),
+            // TODO: Avoid unwrap on Option, handle gracefully
             towers_destroyed: [team1_towers, team2_towers],
             inhibitors_destroyed: [team1_inhibitors, team2_inhibitors],
             gold_earned: [team1_gold, team2_gold],
             team_kda: [team1_kda.try_into().unwrap(), team2_kda.try_into().unwrap()],
+            // TODO: Avoid unwrap on try_into, handle gracefully
         };
 
         let m = Match {
@@ -468,6 +482,7 @@ pub async fn build_dashboard(
     } else {
         "0:00".into()
     };
+    // TODO: Consider storing duration as numeric type instead of parsing strings
 
     // Champion Mastery (top)
     let mastery_values = riot_client::fetch_top_mastery(&puuid).await?;
@@ -483,6 +498,7 @@ pub async fn build_dashboard(
             icon: icons.get(i).copied().unwrap_or("🏹").to_string(),
         });
     }
+    // TODO: Consider mapping directly with iterators instead of manual push
 
     // Live Game (optional)
     let live_game = match riot_client::fetch_current_match(&app).await {
@@ -497,6 +513,7 @@ pub async fn build_dashboard(
                 performance_score: 8.2,
                 progress: 65,
             })
+            // TODO: performance_score and progress are hardcoded, consider computing dynamically
         }
         Ok(None) => None, // No live game
         Err(e) => {
@@ -507,6 +524,7 @@ pub async fn build_dashboard(
             } else {
                 return Err(e); // real error, stop
             }
+            // TODO: Consider matching on error type instead of string contains
         }
     };
 
@@ -514,6 +532,7 @@ pub async fn build_dashboard(
     let tx = conn
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .context("begin transaction")?;
+    // TODO: Consider using a transaction scope guard to ensure rollback on panic
 
     summoner_repo::upsert_summoner(
         &tx,

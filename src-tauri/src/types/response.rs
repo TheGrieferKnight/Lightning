@@ -41,7 +41,7 @@ pub struct ChampionMasteryDto {
     pub mark_required_for_next_level: i32,
     pub tokens_earned: i32,
     pub champion_season_milestone: i32,
-    pub milestone_grades: Vec<String>,
+    pub milestone_grades: Option<Vec<String>>,
     pub next_season_milestone: Option<NextSeasonMilestonesDto>,
 }
 
@@ -77,7 +77,7 @@ impl Default for ChampionMasteryDto {
             champion_season_milestone: 0,
             next_season_milestone: None,
             tokens_earned: 0,
-            milestone_grades: Vec::new(),
+            milestone_grades: None,
         }
     }
 }

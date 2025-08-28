@@ -47,7 +47,7 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            get_match_data,
+            get_current_match_data,
             download_necessary_files,
             get_summoner_spells,
             get_current_player,
