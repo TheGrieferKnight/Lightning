@@ -7,7 +7,7 @@ export const mockChampionTierList: ChampionTierList[] = [
       {
         championId: 222,
         name: "Jinx",
-        iconUrl: "/images/champions/Jinx.png",
+        iconUrl: "/assets/champion_squares/Jinx.png",
         role: "ADC",
         tier: "S+",
         winRate: 54.3,
@@ -18,7 +18,7 @@ export const mockChampionTierList: ChampionTierList[] = [
       {
         championId: 51,
         name: "Caitlyn",
-        iconUrl: "/images/champions/Caitlyn.png",
+        iconUrl: "/assets/champion_squares/Caitlyn.png",
         role: "ADC",
         tier: "S",
         winRate: 52.1,
@@ -34,7 +34,7 @@ export const mockChampionTierList: ChampionTierList[] = [
       {
         championId: 103,
         name: "Ahri",
-        iconUrl: "/images/champions/Ahri.png",
+        iconUrl: "/assets/champion_squares/Ahri.png",
         role: "Mid",
         tier: "S",
         winRate: 53.2,

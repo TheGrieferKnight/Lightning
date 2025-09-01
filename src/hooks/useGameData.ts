@@ -25,19 +25,19 @@ export const useGameData = () => {
 
   const getData = async () => {
     try {
-
       const applicationPath: string = await invoke("get_image_path", {
         subfolder: "summoner_spells",
         name: "SummonerFlash",
       });
 
-      const updatedPath = applicationPath.replace(/\//g, "\\").replace("summoner_spells\\SummonerFlash.png", "");
+      const updatedPath = applicationPath
+        .replace(/\//g, "\\")
+        .replace("summoner_spells\\SummonerFlash.png", "");
 
       pathRef.current = updatedPath;
 
       const response: Spells = await invoke("get_summoner_spells");
-      const matchResponse: MatchData = await invoke("get_match_data");
-
+      const matchResponse: MatchData = await invoke("get_current_match_data");
 
       if (
         matchResponse &&
@@ -46,7 +46,6 @@ export const useGameData = () => {
       ) {
         setMatchData(matchResponse);
       }
-
 
       console.log("Received summoner spells:", response);
       setSummonerSpells(response);

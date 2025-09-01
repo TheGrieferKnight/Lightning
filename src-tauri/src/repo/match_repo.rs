@@ -1,5 +1,5 @@
 // src-tauri/src/repo/match_repo.rs
-use crate::config::MATCH_REGION;
+use crate::config::REGION;
 use crate::types::data_objects::{MatchDto, ObjectiveDto};
 use anyhow::Context;
 use rusqlite::{params, Connection};
@@ -18,7 +18,7 @@ pub fn store_match_full(
        ON CONFLICT(match_id) DO UPDATE SET
          payload_json = excluded.payload_json,
          updated_at = excluded.updated_at",
-        params![&match_id, MATCH_REGION, raw_json, now],
+        params![&match_id, REGION, raw_json, now],
     )
     .context("upsert match_raw")?;
 

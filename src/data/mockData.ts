@@ -42,7 +42,7 @@ const makeParticipant = (
   championName: string,
   kills: number,
   deaths: number,
-  assists: number
+  assists: number,
 ): ParticipantMH => ({
   summonerName,
   championName,
@@ -116,10 +116,10 @@ export const mockMatchHistory: Match[] = [
 
 /* -------------------- Mock Champion Mastery -------------------- */
 export const mockChampionMastery: ChampionMastery[] = [
-  { name: "Jinx", level: 7, points: 284750, icon: "🎯" },
-  { name: "Caitlyn", level: 6, points: 167432, icon: "🔫" },
-  { name: "Vayne", level: 5, points: 89234, icon: "🏹" },
-  { name: "Ezreal", level: 4, points: 45678, icon: "✨" },
+  { name: "Jinx", level: 7, points: 284750, icon: 11 },
+  { name: "Caitlyn", level: 6, points: 167432, icon: 11 },
+  { name: "Vayne", level: 5, points: 89234, icon: 11 },
+  { name: "Ezreal", level: 4, points: 45678, icon: 11 },
 ];
 
 /* -------------------- Mock Live Game -------------------- */

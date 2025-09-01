@@ -15,7 +15,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ className = "" }) => {
 
   return (
     <nav
-      className={`bg-header-gradient-smooth supports-[backdrop-filter]:backdrop-blur-sm w-56 h-full flex flex-col p-3 border-r border-neutral-800/60 has-noise ${className}`}
+    className={`w-56 h-full flex flex-col p-3 border-r border-neutral-800/60 
+      bg-transparent supports-[backdrop-filter]:backdrop-blur-sm has-noise ${className}`}
     >
       {navItems.map(({ to, label, icon: Icon }) => (
         <NavLink
