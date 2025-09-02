@@ -1,3 +1,4 @@
+use crate::config::BYPASS_TOKEN;
 use anyhow::{bail, Result};
 use chrono::Utc;
 use hmac::{Hmac, Mac};
@@ -58,6 +59,7 @@ impl RiotApiClient {
             .header("x-client-id", &self.client_id)
             .header("x-timestamp", ts.to_string())
             .header("x-signature", sig)
+            .header("x-vercel-protection-bypass", BYPASS_TOKEN)
             .json(&payload)
             .send()
             .await?;
@@ -79,6 +81,7 @@ impl RiotApiClient {
             .header("x-client-id", &self.client_id)
             .header("x-timestamp", ts.to_string())
             .header("x-signature", sig)
+            .header("x-vercel-protection-bypass", BYPASS_TOKEN)
             .json(&payload)
             .send()
             .await?;

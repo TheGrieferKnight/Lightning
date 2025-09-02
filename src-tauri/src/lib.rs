@@ -18,7 +18,7 @@ mod utils;
 use api::data_dragon::{download_necessary_files, get_image_path};
 use commands::current_match::*;
 use commands::dashboard::*;
-
+use utils::credentials::{load_credentials, save_credentials};
 // Other imports
 use tracing::{info, warn};
 
@@ -47,6 +47,8 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            save_credentials,
+            load_credentials,
             get_current_match_data,
             download_necessary_files,
             get_summoner_spells,

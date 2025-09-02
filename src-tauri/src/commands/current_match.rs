@@ -2,7 +2,7 @@ use crate::api::lcu::{get_game_name_simple, get_tag_line_simple};
 use crate::api::riot::{fetch_data, fetch_puuid, DataToFetch};
 use crate::types::{match_data::CurrentGameParticipant, response::Responses};
 
-trait ToStringErr<T> {
+pub trait ToStringErr<T> {
     fn string_err(self) -> Result<T, String>;
 }
 

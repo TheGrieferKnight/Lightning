@@ -2,11 +2,12 @@ use anyhow::Result;
 use serde::de::DeserializeOwned;
 use tauri::AppHandle;
 
-use crate::config::{BASE_URL, CLIENT_ID, CLIENT_SECRET, REGION};
+use crate::config::{BASE_URL, REGION};
 use crate::types::data_objects::{LeagueEntryDTO, MatchDto};
 use crate::types::match_data::CurrentGameInfo;
 use crate::types::response::{ChampionMasteryDto, PuuidData, Responses, SummonerNameData};
 use crate::types::riot_api_client::RiotApiClient;
+use crate::utils::credentials::load_credentials_internal;
 
 /// Enum for selecting which data to fetch.
 #[allow(dead_code)]
@@ -40,21 +41,15 @@ async fn get_puuid(app: &AppHandle, client: &RiotApiClient) -> Result<PuuidData>
 
 /// Fetch the player's PUUID string (shortcut).
 pub async fn fetch_puuid(app: &AppHandle) -> Result<String> {
-    let client = RiotApiClient::new(
-        BASE_URL.to_string(),
-        CLIENT_ID.to_string(),
-        CLIENT_SECRET.to_string(),
-    );
+    let (client_id, client_secret) = load_credentials_internal()?;
+    let client = RiotApiClient::new(BASE_URL.to_string(), client_id, client_secret);
     Ok(get_puuid(app, &client).await?.puuid)
 }
 
 /// Fetch raw JSON from Riot API via proxy.
 pub async fn fetch_raw(endpoint: &str) -> Result<String> {
-    let client = RiotApiClient::new(
-        BASE_URL.to_string(),
-        CLIENT_ID.to_string(),
-        CLIENT_SECRET.to_string(),
-    );
+    let (client_id, client_secret) = load_credentials_internal()?;
+    let client = RiotApiClient::new(BASE_URL.to_string(), client_id, client_secret);
     client.post_raw(endpoint, REGION).await
 }
 
@@ -63,11 +58,8 @@ async fn fetch_json<T>(endpoint: &str) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    let client = RiotApiClient::new(
-        BASE_URL.to_string(),
-        CLIENT_ID.to_string(),
-        CLIENT_SECRET.to_string(),
-    );
+    let (client_id, client_secret) = load_credentials_internal()?;
+    let client = RiotApiClient::new(BASE_URL.to_string(), client_id, client_secret);
     client.post_json(endpoint, REGION).await
 }
 
@@ -117,11 +109,8 @@ pub async fn fetch_current_match(app: &AppHandle) -> Result<Option<CurrentGameIn
 
 /// Fetch various data from Riot API (wrapper for Responses).
 pub async fn fetch_data(app: &AppHandle, data_to_fetch: DataToFetch) -> Result<Responses> {
-    let client = RiotApiClient::new(
-        BASE_URL.to_string(),
-        CLIENT_ID.to_string(),
-        CLIENT_SECRET.to_string(),
-    );
+    let (client_id, client_secret) = load_credentials_internal()?;
+    let client = RiotApiClient::new(BASE_URL.to_string(), client_id, client_secret);
     match data_to_fetch {
         DataToFetch::SummonerName => {
             let game_name = crate::api::lcu::get_game_name_simple().await?;

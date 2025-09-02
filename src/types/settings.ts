@@ -1,10 +1,12 @@
+// types/settings.ts
 export interface AppSettings {
   autoStart: boolean;
-  overlays: {
-    summonerSpells: boolean;
-    liveGame: boolean;
-    matchHistory: boolean;
-  };
-  theme: "light" | "dark" | "system";
   notifications: boolean;
+  overlays: {
+    spellTracker: boolean;
+    scoreboard: boolean;
+    minimap: boolean;
+  };
+  clientId: string;
+  clientSecret: string;
 }
