@@ -16,147 +16,55 @@
 
 ## ✨ Features
 
-> **Note:** This project is in active development. Many features are planned but not yet implemented.
+### ✅ Completed Features
+
+- **🚫 Ad-Free Experience** – Focus on gameplay, not distractions  
+- **⚡ Native Performance** – Built with Tauri for lightning-fast responsiveness  
+- **🏗️ Modern Tech Stack** – React 19 with Compiler optimizations  
+- **🔐 Secure API Integration** – Riot Games API access through secure proxy and per client secret and rate limits   
+- **⏱️ Live Summoner Spell Tracking** – Real-time cooldown monitoring during matches  
+- **📊 Match History Integration** – Pulls detailed match history from Riot API  
+- **🏅 Champion Mastery Display** – Shows mastery levels and points for champions  
 
 ### 🚧 In Development
 
 - **🎯 Comprehensive Dashboard**
-  - Detailed match history with performance analytics _(in progress)_
-  - Champion mastery rankings and statistics _(planned)_
+  - Advanced performance analytics _(in progress)_
   - Win rate analysis across different time periods _(planned)_
   - Advanced gameplay statistics and trends _(planned)_
 
-### ✅ Core Features
+---
 
-- **🚫 Ad-Free Experience** - Focus on gameplay, not distractions
-- **⚡ Native Performance** - Built with Tauri for lightning-fast responsiveness
-- **🏗️ Modern Tech Stack** - React 19 with Compiler optimizations
-- **🔐 Secure API Integration** - Riot Games API access through secure Vercel proxy
-- **⏱️ Live Summoner Spell Tracking** - Real-time cooldown monitoring during matches
+## 📊 Feature Status
 
-<!-- As you complete features, move them here from "In Development" section above -->
+| Feature                          | Status       |
+|----------------------------------|--------------|
+| Ad-Free Experience               | ✅ Completed |
+| Native Performance (Tauri)       | ✅ Completed |
+| Secure Riot API Integration      | ✅ Completed |
+| Live Summoner Spell Tracking     | ✅ Completed |
+| Match History Integration        | ✅ Completed |
+| Champion Mastery Display         | ✅ Completed |
+| Win Rate Analytics               | 🚧 Planned   |
+| Advanced Gameplay Insights       | 🚧 Planned   |
+| Team Composition Analysis        | 🚧 Future    |
+| macOS Release                    | 🚧 Future    |
 
-## 🚀 Quick Start
-
-### Download Pre-built Release
-
-1. Navigate to the [Releases](https://github.com/TheGrieferKnight/Lightning/releases) page
-2. Download the latest installer for your platform:
-   - Windows: `.msi` installer
-   - macOS & Linux: Coming soon
-
-### Build from Source
-
-**Prerequisites:**
-
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [Rust](https://rustup.rs/) (latest stable)
-- [Tauri prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites) for your platform
-
-**Installation:**
-
-```bash
-# Clone the repository
-git clone https://github.com/TheGrieferKnight/Lightning.git
-cd Lightning
-
-# Install dependencies
-pnpm install
-
-# Build for production
-pnpm run tauri build
-```
-
-## 🛠️ Development
-
-```bash
-# Run in development mode with hot reload
-pnpm run tauri dev
-
-# Run frontend only (for UI development)
-pnpm run dev
-
-# Build frontend assets
-pnpm run build
-
-# Run tests
-pnpm test
-```
-
-## 🏗️ Tech Stack
-
-- **Frontend:** React 19 (Canary) with React Compiler + Vite + Tailwind CSS
-- **Backend:** Rust + Tauri v2
-- **APIs:** Riot Games API
-- **Build System:** Vite + Tauri CLI
-
-## 📋 System Requirements
-
-- **Windows:** Windows 10 version 1903 or higher
-- **macOS:** macOS 10.15 or higher _(coming soon)_
-- **Linux:** Various distributions supported _(coming soon)_
-
-## 🤝 Contributing
-
-Contributions are welcome! This project is currently developed solo, but community contributions help make Lightning better.
-
-Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
-
-- Setting up the development environment
-- Code style guidelines
-- How to submit pull requests
-- Working with React 19 Canary and the React Compiler
-
-**Quick contribution steps:**
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
-
-## ⚠️ Legal Notice
-
-Lightning is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
-
-## 🐛 Known Issues
-
-We're aware of the following issues and are working on fixes:
-
-- **Issue 1** - Enemies in the Summoner Spell Tracking Overlay are not sorted by role. This issue is of lower priority since there is no official way to get the correct positions and it doesn't break the application.
-- **Issue 2** - Summoner Spell Tracking from previous game stays until you enter the next match. Another low priority issues as it doesn't cause any problems.
-
-> Found a new bug? Please [report it here](https://github.com/TheGrieferKnight/Lightning/issues) with detailed steps to reproduce.
-
-## 🐛 Issues & Support
-
-Found a bug or have a feature request? Please [open an issue](https://github.com/TheGrieferKnight/Lightning/issues).
+---
 
 ## 🗺️ Roadmap
 
 ### 🔄 Current Focus
-
-- [x] Core dashboard implementation
-- [x] Match history integration with Riot API
-- [x] Basic champion mastery display
+- [x] Core dashboard implementation  
+- [x] Match history integration with Riot API  
+- [x] Basic champion mastery display  
 
 ### 🎯 Upcoming Features
-
-- [ ] Real-time match statistics
-- [ ] Win rate analytics and trends
-- [ ] Advanced gameplay insights
+- [ ] Real-time match statistics  
+- [ ] Win rate analytics and trends  
+- [ ] Advanced gameplay insights  
 
 ### 🚀 Future Plans
-
-- [ ] macOS and Linux releases
-- [ ] Team composition analysis
+- [ ] macOS release  
+- [ ] Team composition analysis  
 - [ ] Build recommendations
-- [ ] Tournament mode tracking
-
----
-
-**⭐ If you find Lightning useful, please consider giving it a star!**
