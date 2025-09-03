@@ -1,0 +1,302 @@
+@import "tailwindcss";
+
+.logo.vite:hover {
+  filter: drop-shadow(0 0 2em #747bff);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafb);
+}
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  color: #f6f6f6;
+  background-color: #2f2f2f;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  -webkit-context-menu: none;
+  -moz-context-menu: none;
+  -o-context-menu: none;
+}
+
+.container {
+  margin: 0;
+  padding-top: 10vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: 0.75s;
+}
+
+.logo.tauri:hover {
+  filter: drop-shadow(0 0 2em #24c8db);
+}
+
+.row {
+  display: flex;
+  justify-content: center;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #24c8db;
+}
+
+h1 {
+  text-align: center;
+}
+
+input,
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  color: #ffffff;
+  background-color: #0f0f0f98;
+  transition: border-color 0.25s;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #396cd8;
+}
+button:active {
+  border-color: #396cd8;
+  background-color: #0f0f0f69;
+}
+
+#greet-input {
+  margin-right: 5px;
+}
+
+/* ---------------------------------------------
+   Gradient smoothing utilities
+   - Extra color stops to reduce banding
+   - Noise overlay to break up 8-bit banding
+   - Subtle animation (disabled via prefers-reduced-motion)
+   --------------------------------------------- */
+
+/* Noise overlay (subtle, reusable). Apply with `has-noise`.
+   Use `has-noise-light` for smaller surfaces (avatars, small cards).
+   Opacity stays within 0.02-0.08 as required.
+*/
+.has-noise,
+.has-noise-light {
+  position: relative;
+  overflow: hidden; /* keep noise within rounded corners */
+  isolation: isolate; /* ensure blend stays inside */
+}
+
+.has-noise::after,
+.has-noise-light::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  /* SVG turbulence-based noise (tiny, generated on GPU, no heavy asset) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' seed='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-size: 64px 64px;
+  background-repeat: repeat;
+  mix-blend-mode: soft-light; /* subtle influence on background */
+  opacity: var(--noise-opacity, 0.045);
+  will-change: background-position, opacity;
+  animation: noise-move 48s linear infinite;
+}
+
+/* Default noise intensity for large surfaces */
+.has-noise {
+  --noise-opacity: 0.045;
+}
+
+/* Slightly lighter noise for small surfaces (e.g., avatars) */
+.has-noise-light {
+  --noise-opacity: 0.03;
+}
+
+/* Disable animation when users prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .has-noise::after,
+  .has-noise-light::after {
+    animation: none;
+  }
+}
+
+@keyframes noise-move {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 128px 64px;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+/* src/styles/App.css */
+
+/* ---------------------------------------------
+   Lightning theme: gradient smoothing + dithering
+   - Subtle noise overlay (SVG, tiny, repeats)
+   - Extra gradient stops to reduce banding
+   - Very slow motion on noise (respects reduced motion)
+   --------------------------------------------- */
+
+.has-noise,
+.has-noise-light {
+  position: relative;
+  overflow: hidden; /* keep noise inside rounded corners */
+  isolation: isolate; /* blend stays inside */
+}
+
+.has-noise::after,
+.has-noise-light::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  /* Tiny, tiled SVG noise (GPU-friendly, no large assets) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' seed='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-size: 64px 64px;
+  background-repeat: repeat;
+  mix-blend-mode: soft-light;
+  opacity: var(--noise-opacity, 0.045); /* 0.02–0.08 allowed */
+  will-change: background-position, opacity;
+  animation: noise-move 48s linear infinite;
+}
+
+.has-noise {
+  --noise-opacity: 0.045;
+}
+
+.has-noise-light {
+  --noise-opacity: 0.03;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .has-noise::after,
+  .has-noise-light::after {
+    animation: none;
+  }
+}
+
+@keyframes noise-move {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 128px 64px;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+/* ---------------------------------------------
+      Lightning gradients (multi-stop to limit banding)
+      --------------------------------------------- */
+
+/* App background: deep slate/indigo with electric blue haze */
+.bg-app-gradient-smooth {
+  background-image: linear-gradient(
+    135deg,
+    rgba(2, 6, 23, 1) 0%,
+    /* slate-950 */ rgba(2, 6, 23, 0.985) 12%,
+    rgba(15, 23, 42, 0.18) 28%,
+    /* slate-900 */ rgba(30, 58, 138, 0.22) 48%,
+    /* indigo-700 */ rgba(29, 78, 216, 0.18) 70%,
+    /* blue-700 */ rgba(56, 189, 248, 0.16) 100% /* sky-400 */
+  );
+  background-color: #020617; /* slate-950 fallback */
+}
+
+/* Header: subtle horizontal electric wash */
+.bg-header-gradient-smooth {
+  background-image: linear-gradient(
+    90deg,
+    rgba(2, 6, 23, 0.72) 0%,
+    rgba(2, 6, 23, 0.7) 10%,
+    rgba(49, 46, 129, 0.38) 35%,
+    /* indigo-800 */ rgba(37, 99, 235, 0.34) 55%,
+    /* blue-600 */ rgba(56, 189, 248, 0.28) 80%,
+    /* sky-400 */ rgba(125, 211, 252, 0.26) 100% /* sky-300 */
+  );
+  background-color: rgba(2, 6, 23, 0.72);
+}
+
+/* Live panel: indigo -> blue/cyan */
+.bg-live-gradient-smooth {
+  background-image: linear-gradient(
+    90deg,
+    rgba(49, 46, 129, 0.5) 0%,
+    /* indigo-800 */ rgba(37, 99, 235, 0.48) 40%,
+    /* blue-600 */ rgba(14, 165, 233, 0.44) 100% /* cyan-500 */
+  );
+  background-color: rgba(49, 46, 129, 0.5);
+}
+
+/* Avatar “bolt”: violet -> blue -> cyan */
+.bg-avatar-gradient-smooth {
+  background-image: linear-gradient(
+    135deg,
+    #7c3aed 0%,
+    /* violet-600 */ #4f46e5 40%,
+    /* indigo-600 */ #2563eb 68%,
+    /* blue-600 */ #22d3ee 100% /* cyan-400 */
+  );
+  background-color: #4f46e5;
+}
+
+/* Optional: subtle glow utility for electric accents */
+.glow-cyan {
+  box-shadow: 0 0 0.5rem rgba(56, 189, 248, 0.35),
+    0 0 1.25rem rgba(56, 189, 248, 0.2);
+}
+
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-move {
+  background-size: 200% 200%;
+  animation: gradient-move 8s ease-in-out infinite;
+}

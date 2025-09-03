@@ -1,0 +1,53 @@
+name: Rust CI (Windows)
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: clippy
+
+      - name: Add cargo bin to PATH
+        shell: pwsh
+        run: |
+          echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install cargo-audit
+        shell: pwsh
+        run: cargo install cargo-audit
+
+      - name: Build
+        working-directory: src-tauri
+        shell: pwsh
+        run: cargo build --verbose
+
+      - name: Test
+        working-directory: src-tauri
+        shell: pwsh
+        run: cargo test --verbose
+
+      - name: Clippy
+        working-directory: src-tauri
+        shell: pwsh
+        run: cargo clippy --verbose -- -D warnings
+
+      - name: Audit
+        working-directory: src-tauri
+        shell: pwsh
+        run: cargo audit
