@@ -23,18 +23,30 @@ jobs:
           override: true
           components: clippy
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y \
+          libgtk-3-dev \
+          libglib2.0-dev \
+          libappindicator3-dev \
+          librsvg2-dev \
+          pkg-config \
+          build-essential
+
       - name: Install cargo-audit
-        working-directory: src-tauri
         run: cargo install cargo-audit
+
       - name: Build
         working-directory: src-tauri
-        run: cargo build  --verbose
+        run: cargo build --verbose
+
       - name: Test
         working-directory: src-tauri
-        run: cargo test  --verbose 
+        run: cargo test --verbose
+
       - name: Clippy
         working-directory: src-tauri
-        run: cargo clippy  --verbose -- -D warnings 
+        run: cargo clippy --verbose -- -D warnings
+
       - name: Audit
         working-directory: src-tauri
-        run: cargo audit 
+        run: cargo audit
