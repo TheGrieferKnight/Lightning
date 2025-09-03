@@ -1,6 +1,6 @@
 // src/App.tsx
 import {
-  HashRouter as Router, // ✅ use HashRouter
+  HashRouter as Router, // ✅ use HashRouter for Tauri
   Routes,
   Route,
   Navigate,
@@ -14,11 +14,16 @@ import { Titlebar } from "./components/Titlebar";
 export default function App() {
   return (
     <Router>
-      <div className="flex flex-col h-screen bg-app-gradient-smooth has-noise">
+      <div className="flex flex-col h-screen bg-app-gradient-smooth has-noise text-white">
+        {/* Custom draggable titlebar */}
         <Titlebar />
+
         <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar navigation */}
           <SidebarNav />
-          <main className="flex-1 overflow-y-auto">
+
+          {/* Main content area */}
+          <main className="flex-1 overflow-y-auto px-6 py-6">
             <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/champions" element={<ChampionsPage />} />

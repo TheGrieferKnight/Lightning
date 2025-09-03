@@ -1,3 +1,4 @@
+// src/components/SidebarNav.tsx
 import React from "react";
 import { Home, Sword, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -14,27 +15,43 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ className = "" }) => {
   ];
 
   return (
-    <nav
-    className={`w-56 h-full flex flex-col p-3 border-r border-neutral-800/60 
-      bg-transparent supports-[backdrop-filter]:backdrop-blur-sm has-noise ${className}`}
+    <aside
+      className={`w-60 h-full flex flex-col py-6 px-3 pl-0 
+         backdrop-blur-md shadow-lg ${className}`}
     >
-      {navItems.map(({ to, label, icon: Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ${
-              isActive
-                ? "bg-blue-600/80 text-white shadow-md"
-                : "text-cyan-300 hover:bg-blue-500/20 hover:text-white"
-            }`
-          }
-        >
-          <Icon className="w-5 h-5" />
-          <span className="font-medium">{label}</span>
-        </NavLink>
-      ))}
-    </nav>
+      {/* Nav Items */}
+      <nav className="flex flex-col gap-2">
+        {navItems.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end
+            className={({ isActive }) =>
+              `group flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 relative
+              ${
+                isActive
+                  ? "bg-gradient-to-r from-cyan-500/80 to-blue-600/80 text-white shadow-md"
+                  : "text-cyan-200 hover:bg-white/10 hover:text-white"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-cyan-400" />
+                )}
+                <Icon className="w-5 h-5" />
+                <span
+                  className="text-gray-200
+                "
+                >
+                  {label}
+                </span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+    </aside>
   );
 };

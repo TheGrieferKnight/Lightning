@@ -9,21 +9,26 @@ export const SummonerProfile: React.FC<{ summoner: SummonerData }> = ({
   summoner,
 }) => (
   <div className={`${sectionBase} flex items-center gap-6 mb-8`}>
+    {/* Profile Icon */}
     <div className="relative">
-      <img
-        src={getSummonerImageUrl(summoner.profileIconPath)}
-        alt={summoner.displayName}
-        className="w-24 h-24 rounded-2xl border-2 border-cyan-400 shadow-lg"
-      />
+      <div className="w-24 aspect-square rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-lg">
+        <img
+          src={getSummonerImageUrl(summoner.profileIconPath)}
+          alt={summoner.displayName}
+          className="w-full h-full object-cover"
+        />
+      </div>
       <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-cyan-500 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border border-white/20">
         {summoner.level}
       </span>
     </div>
+
+    {/* Summoner Info */}
     <div className="flex-1">
       <h2 className="text-3xl font-bold text-white mb-2">
         {summoner.displayName}
       </h2>
-      <div className="flex items-center gap-4 text-cyan-300">
+      <div className="flex flex-wrap items-center gap-4 text-cyan-300">
         <span className="flex items-center gap-1">
           <Star className="w-4 h-4" /> Level {summoner.level}
         </span>
