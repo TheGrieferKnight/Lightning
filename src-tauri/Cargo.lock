@@ -2101,6 +2101,7 @@ dependencies = [
  "hex",
  "hmac",
  "keyring",
+ "once_cell",
  "reqwest",
  "rusqlite",
  "serde",

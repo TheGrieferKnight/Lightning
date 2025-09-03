@@ -15,26 +15,29 @@ pub async fn load_puuid(app: &tauri::AppHandle) -> Result<PuuidData> {
 }
 
 pub async fn save_file(app: &tauri::AppHandle, filename: &str, content: &str) -> Result<()> {
-    let app_data_dir = get_app_data_dir(app)?;
-    tokio::fs::create_dir_all(&app_data_dir).await?;
-    let file = app_data_dir.join(filename);
-    tokio::fs::write(file, content).await?;
+    let file = get_app_data_dir(app, filename)?;
+
+    if let Some(parent) = file.parent() {
+        tokio::fs::create_dir_all(parent).await?;
+    }
+    tokio::fs::write(&file, content)
+        .await
+        .with_context(|| format!("Failed to write file {}", file.display()))?;
     Ok(())
 }
 
 pub async fn load_file(app: &tauri::AppHandle, filename: &str) -> Result<String> {
-    let app_data_dir = get_app_data_dir(app)?;
-    let file_path = app_data_dir.join(filename);
+    let file = get_app_data_dir(app, filename)?;
 
-    let contents = tokio::fs::read_to_string(&file_path)
+    tokio::fs::read_to_string(&file)
         .await
-        .with_context(|| format!("Failed to read file {}", file_path.display()))?;
-
-    Ok(contents)
+        .with_context(|| format!("Failed to read file {}", file.display()))
 }
 
-fn get_app_data_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
-    app.path()
+fn get_app_data_dir(app: &tauri::AppHandle, filename: &str) -> Result<PathBuf> {
+    let dir = app
+        .path()
         .app_data_dir()
-        .context("Failed to get app data directory")
+        .context("Failed to get app data directory")?;
+    Ok(dir.join(filename))
 }

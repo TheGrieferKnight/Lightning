@@ -4,16 +4,13 @@ use chrono::{DateTime, TimeZone, Utc};
 
 pub fn compute_match_duration_seconds(info: &InfoDto) -> u64 {
     match (info.game_duration, info.game_end_timestamp) {
-        (Some(d), Some(_)) => d.max(0) as u64,
-        (Some(d), None) => (d.max(0) as u64) / 1000,
+        (Some(d), Some(_)) => d.max(0) as u64,       // seconds
+        (Some(d), None) => (d.max(0) as u64) / 1000, // milliseconds → seconds
         _ => info
             .participants
             .as_ref()
-            .and_then(|ps| {
-                ps.iter()
-                    .filter_map(|p| p.time_played.map(|t| t as u64))
-                    .max()
-            })
+            .and_then(|ps| ps.iter().filter_map(|p| p.time_played).max())
+            .map(|t| t as u64)
             .unwrap_or(0),
     }
 }
