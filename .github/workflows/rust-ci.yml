@@ -13,17 +13,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Set up Rust
-        uses: actions/checkout@v2
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: clippy
+
       - name: Install cargo-audit
+        working-directory: src-tauri
         run: cargo install cargo-audit
-      - name: Navigate to src-tauri
-        run: cd src-tauri\
       - name: Build
-        run: cargo build --verbose --manifest-path src-tauri\Cargo.toml
+        working-directory: src-tauri
+        run: cargo build  --verbose
       - name: Test
-        run: cargo test --verbose --manifest-path src-tauri\Cargo.toml
+        working-directory: src-tauri
+        run: cargo test  --verbose 
       - name: Clippy
-        run: cargo clippy --verbose -- -D warnings --manifest-path src-tauri\Cargo.toml
+        working-directory: src-tauri
+        run: cargo clippy  --verbose -- -D warnings 
       - name: Audit
-        run: cargo audit --manifest-path src-tauri\Cargo.toml
+        working-directory: src-tauri
+        run: cargo audit 
