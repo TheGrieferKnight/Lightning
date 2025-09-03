@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
   if (loading && !data) {
     return (
-      <div className="min-h-screen bg-app-gradient-smooth has-noise text-white flex items-center justify-center">
+      <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <div className="motion-safe:animate-spin rounded-full h-20 w-20 border-b-2 border-cyan-400 mx-auto mb-4" />
           <p className="text-cyan-300">Loading dashboard...</p>
@@ -46,7 +46,7 @@ export default function DashboardPage() {
 
   if ((error && !data) || !data) {
     return (
-      <div className="min-h-screen bg-app-gradient-smooth has-noise text-white flex items-center justify-center">
+      <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <p className="text-red-400 mb-4">Error loading dashboard: {error}</p>
           <button
@@ -176,7 +176,11 @@ export default function DashboardPage() {
             </h3>
             <div className="space-y-3">
               {championMastery.map((champion) => (
-                <ChampionMasteryCard key={champion.name} champion={champion} path={imagePath} />
+                <ChampionMasteryCard
+                  key={champion.name}
+                  champion={champion}
+                  path={imagePath}
+                />
               ))}
             </div>
           </div>
