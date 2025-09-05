@@ -1,13 +1,10 @@
-name: "Publish"
+name: Publish
 
 on:
   push:
-    branches:
-      - feature/automatic-release-creation
-
-# `tauri-action` can also upload app bundles to an existing GitHub release.
-# This workflow uses different actions to create and publish the release.
-# `tauri-action` will only build and upload the app bundles to the specified release.
+    branches: main
+  pull_request:
+    branches: main
 
 jobs:
   create-release:
@@ -16,33 +13,51 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_id: ${{ steps.create-release.outputs.result }}
-
+      release_body: ${{ steps.gitcliff.outputs.content }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # git-cliff needs history and tags
 
-      - name: setup node
-        uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v5
         with:
           node-version: lts/*
 
-      - name: get version
-        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+      - name: Read package.json version
+        id: version
+        run: echo "PACKAGE_VERSION=$(node -p \"require('./package.json').version\")" >> "$GITHUB_ENV"
 
-      - name: create release
+      # Generate changelog text with git-cliff (unreleased since last tag)
+      - name: Generate release notes (git-cliff)
+        id: gitcliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          # If you have a custom config file, change to .gitcliff.toml or cliff.toml
+          config: .gitcliff.toml
+          # --unreleased covers commits since the latest tag; strip header to make it a neat body
+          args: -vv --unreleased --strip header
+        env:
+          OUTPUT: CHANGELOG.md # action also exposes outputs.content
+
+      - name: Create draft release
         id: create-release
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
+            const version = process.env.PACKAGE_VERSION;
+            const body = `.${'{'}{ steps.gitcliff.outputs.content }${'}'}`; // keep as string literal to avoid JS interpolation
             const { data } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: `v${process.env.PACKAGE_VERSION}`,
-              name: `Lightning Desktop v${process.env.PACKAGE_VERSION}`,
-              body: 'Take a look at the assets to download and install this app.',
+              tag_name: `v${version}`,
+              name: `Lightning Desktop v${version}`,
+              body,
               draft: true,
-              prerelease: false
-            })
-            return data.id
+              prerelease: false,
+            });
+            return data.id;
 
   build-tauri:
     needs: create-release
@@ -52,38 +67,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: "windows-latest"
+          - platform: windows-latest
             args: ""
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: setup node
-        uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v5
         with:
           node-version: lts/*
 
-      - name: install Rust stable
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-        # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
       - uses: oven-sh/setup-bun@v2
-      - name: install frontend dependencies
-        run: bun install --force # change this to npm, pnpm or bun depending on which one you use.
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: Install frontend dependencies
+        run: bun install --force
+
+      - name: Build and upload with tauri-action
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -95,19 +108,17 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     needs: [create-release, build-tauri]
-
     steps:
-      - name: publish release
-        id: publish-release
-        uses: actions/github-script@v6
+      - name: Publish release
+        uses: actions/github-script@v7
         env:
           release_id: ${{ needs.create-release.outputs.release_id }}
         with:
           script: |
-            github.rest.repos.updateRelease({
+            await github.rest.repos.updateRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: process.env.release_id,
               draft: false,
-              prerelease: false
-            })
+              prerelease: false,
+            });
