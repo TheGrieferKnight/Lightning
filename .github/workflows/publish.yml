@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -85,6 +85,7 @@ jobs:
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
+      - uses: oven-sh/setup-bun@v2
       - name: install frontend dependencies
         run: bun install --force # change this to npm, pnpm or bun depending on which one you use.
 
