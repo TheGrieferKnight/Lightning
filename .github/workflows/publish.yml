@@ -1,125 +1,124 @@
-name: 'publish'
+name: Publish
+
 on:
   push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: main
+  pull_request:
+    branches: main
 
 jobs:
-  build-binaries:
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.result }}
+      release_body: ${{ steps.gitcliff.outputs.content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # git-cliff needs history and tags
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+
+      - name: Read package.json version
+        id: version
+        run: echo "PACKAGE_VERSION=$(node -p \"require('./package.json').version\")" >> "$GITHUB_ENV"
+
+      # Generate changelog text with git-cliff (unreleased since last tag)
+      - name: Generate release notes (git-cliff)
+        id: gitcliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          # If you have a custom config file, change to .gitcliff.toml or cliff.toml
+          config: .gitcliff.toml
+          # --unreleased covers commits since the latest tag; strip header to make it a neat body
+          args: -vv --unreleased --strip header
+        env:
+          OUTPUT: CHANGELOG.md # action also exposes outputs.content
+
+      - name: Create draft release
+        id: create-release
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const version = process.env.PACKAGE_VERSION;
+            const body = `.${'{'}{ steps.gitcliff.outputs.content }${'}'}`; // keep as string literal to avoid JS interpolation
+            const { data } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `v${version}`,
+              name: `Lightning Desktop v${version}`,
+              body,
+              draft: true,
+              prerelease: false,
+            });
+            return data.id;
+
+  build-tauri:
+    needs: create-release
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
+        include:
+          - platform: windows-latest
+            args: ""
+
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: setup node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
-          cache: 'npm'
-      
-      - name: install Rust stable
+          node-version: lts/*
+
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        
-      - name: install dependencies (ubuntu only)
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf
-          
-      - name: install frontend dependencies
-        run: npm ci --force
-        
-      - name: build tauri app (no release)
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install frontend dependencies
+        run: bun install --force
+
+      - name: Build and upload with tauri-action
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Don't create release automatically
-          tagName: ''
-          releaseName: ''
-          releaseBody: ''
-          releaseDraft: true
-          prerelease: false
-          
-      - name: Upload Windows installer
-        if: matrix.platform == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-msi
-          path: src-tauri/target/release/bundle/msi/*.msi
-          retention-days: 1
-          
-      - name: Upload Linux installers
-        if: matrix.platform == 'ubuntu-22.04'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-installers
-          path: |
-            src-tauri/target/release/bundle/deb/*.deb
-            src-tauri/target/release/bundle/appimage/*.AppImage
-          retention-days: 1
-          
-      - name: Upload macOS installer
-        if: matrix.platform == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-dmg
-          path: src-tauri/target/release/bundle/dmg/*.dmg
-          retention-days: 1
-          
-  publish:
-    needs: build-binaries
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: ${{ matrix.args }}
+
+  publish-release:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
+    needs: [create-release, build-tauri]
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Download Windows artifacts
-        uses: actions/download-artifact@v4
+      - name: Publish release
+        uses: actions/github-script@v7
+        env:
+          release_id: ${{ needs.create-release.outputs.release_id }}
         with:
-          name: windows-msi
-          path: ./release-assets/
-          
-      - name: Download Linux artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-installers
-          path: ./release-assets/
-          
-      - name: Download macOS artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-dmg
-          path: ./release-assets/
-          
-      - name: Display release assets
-        run: ls -la ./release-assets/
-        
-      - name: Create release with essential files only
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: 'Lightning ${{ github.ref_name }}'
-          body: |
-            ## Installation
-            
-            **Windows**: Download and run the `.msi` file
-            **Linux**: Download the `.deb` file for Debian/Ubuntu or the `.AppImage` for universal Linux
-            **macOS**: Download and install the `.dmg` file
-            
-            ## What's Changed
-            See the commits for detailed changes.
-          draft: false
-          prerelease: false
-          files: ./release-assets/*
-          token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: process.env.release_id,
+              draft: false,
+              prerelease: false,
+            });
