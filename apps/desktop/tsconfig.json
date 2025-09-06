@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "types": ["vite/client"],
+    "noEmit": true, // app doesn't emit, Vite bundles it
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src", "../../packages/mock/src/data", "../../packages/mock/src/index.ts", "../../packages/mock/src/mockChampionData.ts", "../../packages/mock/src/mockData.ts", "../../packages/mock/src/mockSettings.ts"],
+  "references": [
+    { "path": "../../packages/ui" },
+    { "path": "../../packages/types" },
+    { "path": "../../packages/utils" },
+    { "path": "../../packages/client" }
+  ]
+}
