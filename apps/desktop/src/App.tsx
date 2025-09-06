@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+
 import { SidebarNav } from "@lightning/ui";
 import DashboardPage from "./pages/Dashboard";
 import ChampionsPage from "./pages/Champions";
