@@ -1,5 +1,14 @@
 {
   "compilerOptions": {
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@lightning/ui": ["packages/ui/src"],
+      "@lightning/types": ["packages/types/src"],
+      "@lightning/utils": ["packages/utils/src"],
+      "@lightning/client": ["packages/client/src"],
+      "@lightning/mock": ["packages/mock/src"],
+    },
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
@@ -20,5 +29,12 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "references": [
+    { "path": "apps/desktop"},
+    { "path": "packages/ui"},
+    { "path": "packages/types"},
+    { "path": "packages/utils"},
+    { "path": "packages/client"},
+    { "path": "packages/mock"},
+  ]
 }
