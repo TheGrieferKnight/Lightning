@@ -15,7 +15,7 @@ export const mockSummonerData: SummonerData = {
   displayName: "RiftMaster2024",
   level: 87,
   profileIconId: 4371,
-  profileIconPath: "assets/profileIcons/4371.png",
+  profileIconPath: "15.17.1/img/profileicon/4371.png",
   rank: {
     leagueId: "12345",
     puuid: "mock-puuid",
@@ -116,10 +116,10 @@ export const mockMatchHistory: Match[] = [
 
 /* -------------------- Mock Champion Mastery -------------------- */
 export const mockChampionMastery: ChampionMastery[] = [
-  { name: "Jinx", level: 7, points: 284750, icon: 11 },
-  { name: "Caitlyn", level: 6, points: 167432, icon: 11 },
-  { name: "Vayne", level: 5, points: 89234, icon: 11 },
-  { name: "Ezreal", level: 4, points: 45678, icon: 11 },
+  { name: "Jinx", level: 7, points: 284750, icon: 222 },
+  { name: "Caitlyn", level: 6, points: 167432, icon: 51 },
+  { name: "Vayne", level: 5, points: 89234, icon: 67 },
+  { name: "Ezreal", level: 4, points: 45678, icon: 81 },
 ];
 
 /* -------------------- Mock Live Game -------------------- */

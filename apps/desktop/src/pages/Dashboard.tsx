@@ -53,7 +53,7 @@ export default function DashboardPage() {
           <p className="text-red-400 mb-4">Error loading dashboard: {error}</p>
           <button
             onClick={refetch}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="button px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
           >
             Retry
           </button>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
               {matches.length > 5 && (
                 <button
                   onClick={() => setShowAllMatches((prev) => !prev)}
-                  className="text-cyan-400 hover:text-cyan-300 text-sm transition-colors"
+                  className="button text-cyan-400 hover:text-cyan-300 text-sm transition-colors"
                 >
                   {showAllMatches ? "Show Less" : "View All"}
                 </button>

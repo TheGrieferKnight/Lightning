@@ -5,7 +5,6 @@ export const mockSettings: AppSettings = {
   autoStart: true,
   notifications: true,
   overlays: {
-    spellTracker: true,
     scoreboard: false,
     minimap: true,
   },

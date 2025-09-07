@@ -3,7 +3,6 @@ export interface AppSettings {
   autoStart: boolean;
   notifications: boolean;
   overlays: {
-    spellTracker: boolean;
     scoreboard: boolean;
     minimap: boolean;
   };

@@ -72,7 +72,7 @@ export default function SettingsPage() {
           <span>Auto-start with Windows</span>
           <button
             onClick={() => toggle("autoStart")}
-            className={`relative w-12 h-6 rounded-full transition-colors ${
+            className={`button relative w-12 h-6 rounded-full transition-colors ${
               settings.autoStart ? "bg-green-500" : "bg-gray-600"
             }`}
           >
@@ -87,7 +87,7 @@ export default function SettingsPage() {
           <span>Enable Notifications</span>
           <button
             onClick={() => toggle("notifications")}
-            className={`relative w-12 h-6 rounded-full transition-colors ${
+            className={`button relative w-12 h-6 rounded-full transition-colors ${
               settings.notifications ? "bg-green-500" : "bg-gray-600"
             }`}
           >
@@ -113,7 +113,7 @@ export default function SettingsPage() {
               onClick={() =>
                 toggleOverlay(overlay as keyof AppSettings["overlays"])
               }
-              className={`relative w-12 h-6 rounded-full transition-colors ${
+              className={`button relative w-12 h-6 rounded-full transition-colors ${
                 settings.overlays[overlay as keyof AppSettings["overlays"]]
                   ? "bg-green-500"
                   : "bg-gray-600"
@@ -151,7 +151,7 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => setEditingCreds(true)}
-              className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
+              className="button px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
             >
               Edit Credentials
             </button>
@@ -166,7 +166,7 @@ export default function SettingsPage() {
                 type="text"
                 value={tempClientId}
                 onChange={(e) => setTempClientId(e.target.value)}
-                className="w-full rounded-md bg-gray-700 border border-gray-600 p-2 text-white"
+                className="input w-full rounded-md bg-gray-700 border border-gray-600 p-2 text-white"
                 placeholder="Enter your client ID"
               />
             </div>
@@ -178,20 +178,20 @@ export default function SettingsPage() {
                 type="password"
                 value={tempClientSecret}
                 onChange={(e) => setTempClientSecret(e.target.value)}
-                className="w-full rounded-md bg-gray-700 border border-gray-600 p-2 text-white"
+                className="input w-full rounded-md bg-gray-700 border border-gray-600 p-2 text-white"
                 placeholder="Enter your client secret"
               />
             </div>
             <div className="flex gap-3">
               <button
                 onClick={saveCredentials}
-                className="px-4 py-2 bg-green-600 rounded hover:bg-green-500"
+                className="button px-4 py-2 bg-green-600 rounded hover:bg-green-500"
               >
                 Save
               </button>
               <button
                 onClick={() => setEditingCreds(false)}
-                className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500"
+                className="button px-4 py-2 bg-gray-600 rounded hover:bg-gray-500"
               >
                 Cancel
               </button>
@@ -202,7 +202,7 @@ export default function SettingsPage() {
 
       {/* Save all settings */}
       <div className="flex justify-end">
-        <button className="px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold">
+        <button className="button px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 font-semibold">
           Save Settings
         </button>
       </div>

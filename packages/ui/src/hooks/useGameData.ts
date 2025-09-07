@@ -1,22 +1,25 @@
 // src/hooks/useGameData.ts
-
-import { useState, useEffect, useRef } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { getAllWindows, PhysicalPosition } from "@tauri-apps/api/window";
-import { Spells, MatchData } from "@lightning/types";
+import { useState, useEffect, useRef } from 'react';
+import { Spells, MatchData } from '@lightning/types';
+import { isTauri, safeInvoke } from '@lightning/utils';
 
 export const useGameData = () => {
   const [summonerSpells, setSummonerSpells] = useState<Spells>([]);
-  // const [path, setPath] = useState("");
   const [matchData, setMatchData] = useState<MatchData | null>(null);
   const [counter, setCounter] = useState(0);
 
-  const pathRef = useRef("");
+  const pathRef = useRef('');
 
   const moveWindow = async () => {
+    if (!isTauri) return;
+
+    const { getAllWindows, PhysicalPosition } = await import(
+      '@tauri-apps/api/window'
+    );
     const windows = await getAllWindows();
+
     for (const window of windows) {
-      if (window.label === "SumSpellOverlay") {
+      if (window.label === 'SumSpellOverlay') {
         const position = new PhysicalPosition(1920 - 175, 1080 / 2 - 268 / 2);
         window.setPosition(position);
       }
@@ -24,39 +27,70 @@ export const useGameData = () => {
   };
 
   const getData = async () => {
+    // Web: prefer mocks; otherwise, harmless placeholders
+    if (!isTauri) {
+      try {
+        // Try to use your mock package if it exports game-related mocks
+        const mockMod: any = await import('@lightning/mock').catch(() => null);
+
+        if (mockMod?.mockSummonerSpells) {
+          setSummonerSpells(mockMod.mockSummonerSpells as Spells);
+        } else {
+          setSummonerSpells([]); // minimal placeholder
+        }
+
+        if (mockMod?.mockMatchData) {
+          setMatchData(mockMod.mockMatchData as MatchData);
+        } else {
+          setMatchData(null);
+        }
+
+        // Path not relevant on web; keep empty
+        pathRef.current = '';
+      } catch {
+        setSummonerSpells([]);
+        setMatchData(null);
+        pathRef.current = '';
+      }
+      return;
+    }
+
+    // Tauri (desktop) path — unchanged behavior
     try {
-      const applicationPath: string = await invoke("get_image_path", {
-        subfolder: "summoner_spells",
-        name: "SummonerFlash",
+      const applicationPath: string = await safeInvoke('get_image_path', {
+        subfolder: 'summoner_spells',
+        name: 'SummonerFlash',
       });
 
       const updatedPath = applicationPath
-        .replace(/\//g, "\\")
-        .replace("summoner_spells\\SummonerFlash.png", "");
+        .replace(/\//g, '\\')
+        .replace('summoner_spells\\SummonerFlash.png', '');
 
       pathRef.current = updatedPath;
 
-      const response: Spells = await invoke("get_summoner_spells");
-      const matchResponse: MatchData = await invoke("get_current_match_data");
+      const response = await safeInvoke<Spells>('get_summoner_spells');
+      const matchResponse = await safeInvoke<MatchData>(
+        'get_current_match_data'
+      );
 
       if (
         matchResponse &&
-        typeof matchResponse === "object" &&
-        "Match" in matchResponse
+        typeof matchResponse === 'object' &&
+        'Match' in (matchResponse as unknown as Record<string, unknown>)
       ) {
         setMatchData(matchResponse);
       }
 
-      console.log("Received summoner spells:", response);
+      console.log('Received summoner spells:', response);
       setSummonerSpells(response);
     } catch (error) {
-      console.error("Error fetching summoner spells:", error);
+      console.error('Error fetching summoner spells:', error);
     }
   };
 
   useEffect(() => {
-    // Initial data fetch
     getData();
+    // Only try to move the window in Tauri
     moveWindow();
 
     const handleContextMenu = (e: Event) => {
@@ -64,17 +98,16 @@ export const useGameData = () => {
       return false;
     };
 
-    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener('contextmenu', handleContextMenu);
 
-    // Data refresh timer - runs every 15 seconds
     const dataRefreshInterval = setInterval(async () => {
-      console.log("Auto-refreshing data...");
+      console.log('Auto-refreshing data...');
       setCounter((prev) => prev + 1);
       await getData();
     }, 15000);
 
     return () => {
-      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener('contextmenu', handleContextMenu);
       clearInterval(dataRefreshInterval);
     };
   }, []);
