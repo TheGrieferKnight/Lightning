@@ -30,8 +30,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: "./LightningDashboard.html",
-        secondary: "./SummonerSpellTracker.html",
+        main: "./apps/desktop/LightningDashboard.html",
       },
     },
   },
