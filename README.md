@@ -8,12 +8,6 @@
 
 ![Lightning App Screenshot](screenshots/main-dashboard.png)
 
-**Summoner Spell Tracking Overlay**
-
-![Lightning Spell Tracker Screenshot](screenshots/spell-tracker.png)
-
-<!-- Add actual screenshots when available -->
-
 ## ✨ Features
 
 ### ✅ Completed Features
@@ -22,7 +16,6 @@
 - **⚡ Native Performance** – Built with Tauri for lightning-fast responsiveness  
 - **🏗️ Modern Tech Stack** – React 19 with Compiler optimizations  
 - **🔐 Secure API Integration** – Riot Games API access through secure proxy and per client secret and rate limits   
-- **⏱️ Live Summoner Spell Tracking** – Real-time cooldown monitoring during matches  
 - **📊 Match History Integration** – Pulls detailed match history from Riot API  
 - **🏅 Champion Mastery Display** – Shows mastery levels and points for champions  
 
@@ -42,7 +35,6 @@
 | Ad-Free Experience               | ✅ Completed |
 | Native Performance (Tauri)       | ✅ Completed |
 | Secure Riot API Integration      | ✅ Completed |
-| Live Summoner Spell Tracking     | ✅ Completed |
 | Match History Integration        | ✅ Completed |
 | Champion Mastery Display         | ✅ Completed |
 | Win Rate Analytics               | 🚧 Planned   |
