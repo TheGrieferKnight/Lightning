@@ -1,10 +1,16 @@
 {
   "name": "@lightning/mock",
   "version": "0.0.1",
-  "main": "src/index.ts",
+  "main": "dist/src/index.ts",
+  "module": "dist/src/index.ts",
+  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.ts",
+      "types": "./dist/src/index.d.ts"
+    }
+  },
   "dependencies": {
     "react": "19.2.0-canary-fa3feba6-20250623"
-  },
-  "private": true,
-  "type": "module"
+  }
 }

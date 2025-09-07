@@ -1,7 +1,7 @@
-import { invoke } from "@tauri-apps/api/core";
-import { useState, useEffect, useCallback } from "react";
-import { DashboardData } from "@lightning/types";
-import { mockDashboardData } from "@lightning/mock";
+import { useState, useEffect, useCallback } from 'react';
+import { DashboardData } from '@lightning/types';
+import { mockDashboardData } from '@lightning/mock';
+import { isTauri, safeInvoke } from '@lightning/utils';
 
 export const useDashboardData = (summonerName?: string) => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -12,39 +12,47 @@ export const useDashboardData = (summonerName?: string) => {
     try {
       setLoading(true);
       setError(null);
-      console.log("stuff");
+
+      // In web builds, use mock data and skip Tauri entirely.
+      if (!isTauri) {
+        setData(mockDashboardData);
+        return;
+      }
 
       let name = summonerName;
       if (!name) {
-        // Ask backend for current player
-        const player = await invoke<string>("get_current_summoner");
+        const player = await safeInvoke<string>('get_current_summoner');
         name = player;
-        console.log("[useDashboardData] Current summoner from backend:", name);
+        console.log(
+          '[useDashboardData] Current summoner from backend:',
+          name
+        );
       }
 
-      if (!name) {
-        throw new Error("No summoner name available");
-      }
+      if (!name) throw new Error('No summoner name available');
 
-      // Fetch dashboard data from backend
-      const dashboardData = await invoke<DashboardData>("get_dashboard_data", {
-        summonerName: name,
-      });
+      const dashboardData = await safeInvoke<DashboardData>(
+        'get_dashboard_data',
+        { summonerName: name }
+      );
 
-      console.log("[useDashboardData] Dashboard data received:", dashboardData);
+      console.log(
+        '[useDashboardData] Dashboard data received:',
+        dashboardData
+      );
       setData(dashboardData);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to fetch data";
+        err instanceof Error ? err.message : 'Failed to fetch data';
       setError(message);
-      console.error("[useDashboardData] Error:", message);
+      console.error('[useDashboardData] Error:', message);
 
-      // Fallback to mock data for development
+      // Fallback to mock data for development/web
       setData(mockDashboardData);
     } finally {
       setLoading(false);
     }
-  }, [summonerName]); // ✅ stable unless summonerName changes
+  }, [summonerName]);
 
   useEffect(() => {
     fetchAllData();

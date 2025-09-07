@@ -6,7 +6,6 @@
       "@lightning/ui": ["packages/ui/src"],
       "@lightning/types": ["packages/types/src"],
       "@lightning/utils": ["packages/utils/src"],
-      "@lightning/client": ["packages/client/src"],
       "@lightning/mock": ["packages/mock/src"],
     },
     "target": "ES2020",

@@ -2,19 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Minus, Square, Copy, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
-const win = getCurrentWindow();
-
-type ResizeDirection =
-  | "North"
-  | "South"
-  | "East"
-  | "West"
-  | "NorthEast"
-  | "NorthWest"
-  | "SouthEast"
-  | "SouthWest";
-
 export const Titlebar: React.FC = () => {
+  const win = getCurrentWindow();
   const [isMax, setIsMax] = useState(false);
   const dragRef = useRef<HTMLDivElement | null>(null);
 
@@ -81,8 +70,6 @@ export const Titlebar: React.FC = () => {
           />
         </div>
       </div>
-
-      <ResizeHandles />
     </>
   );
 };
@@ -109,54 +96,11 @@ function TitlebarBtn({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={`${base} ${accent === "danger" ? dangerHover : normalHover}`}
+      className={`titlebarbtn  ${base} ${
+        accent === "danger" ? dangerHover : normalHover
+      }`}
     >
       <div className="flex items-center justify-center">{icon}</div>
     </button>
   );
 }
-
-export const ResizeHandles: React.FC = () => {
-  const start = async (edge: ResizeDirection) => {
-    try {
-      await win.startResizeDragging(edge);
-    } catch {}
-  };
-
-  return (
-    <>
-      <div
-        className="fixed top-0 left-0 right-0 h-2 cursor-n-resize"
-        onMouseDown={() => void start("North")}
-      />
-      <div
-        className="fixed bottom-0 left-0 right-0 h-2 cursor-s-resize"
-        onMouseDown={() => void start("South")}
-      />
-      <div
-        className="fixed top-0 bottom-0 left-0 w-2 cursor-w-resize"
-        onMouseDown={() => void start("West")}
-      />
-      <div
-        className="fixed top-0 bottom-0 right-0 w-2 cursor-e-resize"
-        onMouseDown={() => void start("East")}
-      />
-      <div
-        className="fixed top-0 left-0 w-3 h-3 cursor-nw-resize"
-        onMouseDown={() => void start("NorthWest")}
-      />
-      <div
-        className="fixed top-0 right-0 w-3 h-3 cursor-ne-resize"
-        onMouseDown={() => void start("NorthEast")}
-      />
-      <div
-        className="fixed bottom-0 left-0 w-3 h-3 cursor-sw-resize"
-        onMouseDown={() => void start("SouthWest")}
-      />
-      <div
-        className="fixed bottom-0 right-0 w-3 h-3 cursor-se-resize"
-        onMouseDown={() => void start("SouthEast")}
-      />
-    </>
-  );
-};

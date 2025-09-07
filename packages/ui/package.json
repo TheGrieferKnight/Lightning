@@ -3,7 +3,15 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/src/index.ts",
+  "module": "dist/src/index.ts",
+  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.ts",
+      "types": "./dist/src/index.d.ts"
+    }
+  },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
     "lucide-react": "^0.542.0",
