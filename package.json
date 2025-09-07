@@ -9,8 +9,9 @@
   "version": "0.1.3",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev:desktop": "vite -c ./apps/desktop/vite.config.ts",
+    "build:web": "tsc -p ./apps/web/tsconfig.json && vite build -c ./apps/web/vite.config.ts",
+    "build:desktop": "vite build -c ./apps/desktop/vite.config.ts",
     "preview": "vite preview",
     "tauri": "tauri"
   },
