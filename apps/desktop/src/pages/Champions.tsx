@@ -45,7 +45,7 @@ export default function ChampionsPage() {
           <button
             key={role}
             onClick={() => setSelectedRole(role)}
-            className={`px-3 py-1 rounded ${
+            className={`button px-3 py-1 rounded ${
               selectedRole === role
                 ? "bg-blue-600 text-white"
                 : "bg-neutral-800 text-cyan-300 hover:bg-neutral-700"
