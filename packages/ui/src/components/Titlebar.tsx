@@ -44,15 +44,13 @@ export const Titlebar: React.FC = () => {
   return (
     <>
       <div
-        className="fixed top-0 left-0 right-0 z-50 h-9 px-3 flex items-center justify-between bg-header-gradient-smooth supports-[backdrop-filter]:backdrop-blur-sm border-b border-neutral-800/60 has-noise"
+        ref={dragRef}
+        data-tauri-drag-region
+        className="fixed top-0 left-0 right-0 z-50 h-9 pl-3 pr-1 flex items-center justify-between bg-header-gradient-smooth supports-[backdrop-filter]:backdrop-blur-sm border-b border-neutral-800/60 has-noise"
         onDoubleClick={onDoubleClick}
       >
         {/* Drag region */}
-        <div
-          ref={dragRef}
-          data-tauri-drag-region
-          className="flex items-center gap-2 select-none h-full"
-        >
+        <div className="flex items-center gap-2 select-none h-full">
           <div className="h-5 w-5 rounded-md bg-avatar-gradient-smooth has-noise-light shadow-md" />
           <span className="text-sm font-semibold text-cyan-200">Lightning</span>
         </div>
