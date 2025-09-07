@@ -1,0 +1,141 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: ci/lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install deps
+        run: bun install --frozen-lockfile
+
+      - name: Lint (ESLint)
+        run: bun run lint
+
+      - name: Typecheck (TS)
+        run: bun run typecheck
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rustfmt check
+        run: |
+          rustup component add rustfmt
+          cargo fmt --all -- --check
+        working-directory: src-tauri
+
+  test_js:
+    name: ci/test-js
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install deps
+        run: bun install --frozen-lockfile
+
+      - name: Test (JavaScript)
+        env:
+          CI: true
+        run: bun run test:ci
+
+  test_rust:
+    name: ci/test-rust
+    runs-on: ubuntu-latest
+    env:
+      CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            src-tauri -> target
+
+      - name: Clippy
+        run: |
+          rustup component add clippy
+          cargo clippy --all-targets --all-features -- -D warnings
+        working-directory: src-tauri
+
+      - name: Test (Rust)
+        run: cargo test --workspace --all-features --all-targets --locked
+        working-directory: src-tauri
+
+  build_web:
+    name: ci/build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install deps
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend
+        run: bun run build
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: |
+            dist
+            build
+          if-no-files-found: ignore
+
+  build_tauri_windows:
+    name: ci/build-tauri-windows
+    runs-on: windows-latest
+    env:
+      CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            src-tauri -> target
+
+      - name: Install deps
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend (if not configured in Tauri beforeBuildCommand)
+        run: bun run build
+
+      - name: Build Tauri (debug)
+        run: bun run tauri build -- --debug
+
+      - name: Upload windows app artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-debug
+          path: |
+            src-tauri/target/debug/**
+            src-tauri/target/release/bundle/**
+          if-no-files-found: ignore
