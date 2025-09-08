@@ -10,7 +10,7 @@
   "type": "module",
   "scripts": {
     "dev:desktop": "vite -c ./apps/desktop/vite.config.ts",
-    "build:web": "tsc -p ./apps/web/tsconfig.json && vite build -c ./apps/web/vite.config.ts",
+    "build:web": "tsc -b packages/types packages/utils packages/ui packages/mock apps/web && tsc -p ./apps/web/tsconfig.json && vite build -c ./apps/web/vite.config.ts",
     "build:desktop": "vite build -c ./apps/desktop/vite.config.ts",
     "preview": "vite preview",
     "tauri": "tauri"
