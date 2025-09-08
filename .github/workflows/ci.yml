@@ -60,7 +60,7 @@ jobs:
 
   test_rust:
     name: ci/test-rust
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     env:
       CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
     steps:
@@ -127,7 +127,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build Tauri (debug)
-        run: bun run tauri build -- --debug
+        run: bun run tauri build
 
       - name: Upload windows app artifacts
         uses: actions/upload-artifact@v4
