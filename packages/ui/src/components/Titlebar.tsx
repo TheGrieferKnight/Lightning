@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Minus, Square, Copy, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
@@ -10,7 +10,9 @@ export const Titlebar: React.FC = () => {
   const refreshMax = useCallback(async () => {
     try {
       setIsMax(await win.isMaximized());
-    } catch {}
+    } catch {
+      return;
+    }
   }, []);
 
   useEffect(() => {

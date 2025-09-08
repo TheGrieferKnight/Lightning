@@ -1,7 +1,8 @@
 // src/components/AppLayout.tsx
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { SidebarNav } from "./SidebarNav";
 import { isTauri } from "@lightning/utils";
+import React from "react";
 
 // Dynamically load the appropriate titlebar based on environment.
 // This avoids importing any Tauri-related modules in the web build.

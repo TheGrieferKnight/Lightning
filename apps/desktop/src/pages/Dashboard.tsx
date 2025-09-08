@@ -11,7 +11,7 @@ import { Activity, Award, Clock, Star, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
-  const [_currentTime, setCurrentTime] = useState(new Date());
+  // const [_currentTime, setCurrentTime] = useState(new Date());
   const [showAllMatches, setShowAllMatches] = useState(false);
   const [expandedMatches, setExpandedMatches] = useState<Set<string>>(
     new Set()
@@ -19,11 +19,11 @@ export default function DashboardPage() {
 
   const { data, loading, error, refetch } = useDashboardData();
 
-  // Clock update every second
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  // // Clock update every second
+  // useEffect(() => {
+  //   const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+  //   return () => clearInterval(timer);
+  // }, []);
 
   // Auto-refresh dashboard every 30 seconds
   useEffect(() => {

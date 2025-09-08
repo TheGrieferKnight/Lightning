@@ -10,6 +10,7 @@ export async function safeInvoke<T>(
   cmd: string,
   args?: Record<string, unknown>
 ): Promise<T> {
+  
   const { invoke } = await import('@tauri-apps/api/core');
   return invoke<T>(cmd, args);
 }
@@ -30,14 +31,10 @@ function joinUrl(base: string, p: string): string {
  * - In Web: returns CDN + normalized filePath.
  */
 export function safeConvertFileSrc(filePath: string): string {
-  if (typeof window !== 'undefined') {
-    const tauri = (window as any).__TAURI__;
+  if (typeof window !== 'undefined' && window.__TAURI__) {
     // v2: __TAURI__.core.convertFileSrc
-    // v1: __TAURI__.tauri.convertFileSrc
-    const cfs =
-      tauri?.core?.convertFileSrc ??
-      tauri?.tauri?.convertFileSrc ??
-      tauri?.convertFileSrc; // very old shims
+
+    const cfs = window.__TAURI__.core?.convertFileSrc;
 
     if (typeof cfs === 'function') {
       try {

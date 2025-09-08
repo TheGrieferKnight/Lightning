@@ -30,8 +30,13 @@ export const useGameData = () => {
     // Web: prefer mocks; otherwise, harmless placeholders
     if (!isTauri) {
       try {
-        // Try to use your mock package if it exports game-related mocks
-        const mockMod: any = await import('@lightning/mock').catch(() => null);
+       type MockModule = {
+  mockSummonerSpells?: Spells;
+  mockMatchData?: MatchData;
+};
+
+const mockMod = (await import('@lightning/mock').catch(() => null)) as MockModule | null;
+
 
         if (mockMod?.mockSummonerSpells) {
           setSummonerSpells(mockMod.mockSummonerSpells as Spells);

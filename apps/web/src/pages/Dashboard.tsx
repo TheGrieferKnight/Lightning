@@ -10,12 +10,7 @@ import {
 import { sectionBase } from "@lightning/utils";
 import { Activity, Award, Clock, Star, Trophy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-
-const isTauri =
-  typeof window !== "undefined" &&
-  Boolean(
-    (window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__ // v2/v1
-  );
+import { isTauri } from "@lightning/utils";
 
 function useDashboardDataWeb() {
   const [data, setData] = useState<typeof mockDashboardData | null>(null);
@@ -45,7 +40,7 @@ function useDashboardDataWeb() {
 }
 
 export default function DashboardPage() {
-  const [_currentTime, setCurrentTime] = useState(new Date());
+  // const [_currentTime, setCurrentTime] = useState(new Date());
   const [showAllMatches, setShowAllMatches] = useState(false);
   const [expandedMatches, setExpandedMatches] = useState<Set<string>>(
     new Set()
@@ -57,10 +52,10 @@ export default function DashboardPage() {
   );
   const { data, loading, error, refetch } = useDataHook();
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  // useEffect(() => {
+  //   const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+  //   return () => clearInterval(timer);
+  // }, []);
 
   useEffect(() => {
     const refreshInterval = setInterval(() => {

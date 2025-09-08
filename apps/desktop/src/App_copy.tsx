@@ -19,7 +19,7 @@ function App() {
       setSelectedRowIndex(rowIndex);
     } else {
       if (selectedRowIndex !== rowIndex) {
-        setSummonerSpells((prev: any) => {
+        setSummonerSpells((prev) => {
           const newSpells = [...prev];
           [newSpells[selectedRowIndex], newSpells[rowIndex]] = [
             newSpells[rowIndex],
