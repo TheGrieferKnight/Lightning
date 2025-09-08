@@ -40,7 +40,7 @@ jobs:
         run: |
           rustup component add rustfmt
           cargo fmt --all -- --check
-        working-directory: src-tauri
+        working-directory: ./apps/desktop/src-tauri
 
   test_js:
     name: ci/test-js
