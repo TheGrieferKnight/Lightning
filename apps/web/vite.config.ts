@@ -6,7 +6,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   root: __dirname, // <-- ensure Vite serves apps/web as root
-  base: '/Lightning/',
+  base: '/Lightning-demo/',
   plugins: [
     react({ babel: { plugins: [["babel-plugin-react-compiler"]] } }),
     tsconfigPaths(),
