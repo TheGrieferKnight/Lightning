@@ -71,17 +71,17 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: |
-            src-tauri -> target
+            ./apps/desktop/src-tauri -> target
 
       - name: Clippy
         run: |
           rustup component add clippy
           cargo clippy --all-targets --all-features -- -D warnings
-        working-directory: src-tauri
+        working-directory: ./apps/desktop/src-tauri
 
       - name: Test (Rust)
         run: cargo test --workspace --all-features --all-targets --locked
-        working-directory: src-tauri
+        working-directory: ./apps/desktop/src-tauri
 
   build_web:
     name: ci/build-web
@@ -95,7 +95,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build frontend
-        run: bun run build
+        run: bun run build:web
 
       - name: Upload web build
         uses: actions/upload-artifact@v4
@@ -125,9 +125,6 @@ jobs:
 
       - name: Install deps
         run: bun install --frozen-lockfile
-
-      - name: Build frontend (if not configured in Tauri beforeBuildCommand)
-        run: bun run build
 
       - name: Build Tauri (debug)
         run: bun run tauri build -- --debug
