@@ -1,7 +1,7 @@
 {
   "name": "@lightning/ui",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.1",
   "type": "module",
   "main": "dist/src/index.ts",
   "module": "dist/src/index.ts",

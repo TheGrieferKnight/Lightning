@@ -1,10 +1,7 @@
 import { mockSettings } from "@lightning/mock";
 import { AppSettings } from "@lightning/types";
 import { useEffect, useState } from "react";
-
-const isTauri =
-  typeof window !== "undefined" &&
-  Boolean((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__);
+import { isTauri } from "@lightning/utils";
 
 async function loadCredentialsWeb(): Promise<[string, string]> {
   const id = localStorage.getItem("clientId") ?? "";
