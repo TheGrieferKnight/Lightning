@@ -28,7 +28,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Lint (ESLint)
-        run: bun run lint
+        run: bun run eslint
 
       - name: Typecheck (TS)
         run: bun run typecheck
