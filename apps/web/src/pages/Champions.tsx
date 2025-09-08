@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { mockChampionTierList } from "@lightning/mock";
 import { ChampionRole, ChampionTierData } from "@lightning/types";
+import { getChampionImageUrl } from "@lightning/utils";
 
 const roles: (ChampionRole | "All")[] = [
   "All",
@@ -103,7 +104,7 @@ export default function ChampionsPage() {
                 <td className="p-2">{idx + 1}</td>
                 <td className="p-2 flex items-center gap-2">
                   <img
-                    src={champ.iconUrl}
+                    src={getChampionImageUrl(champ.championId, champ.iconUrl)}
                     alt={champ.name}
                     className="w-6 h-6 rounded-full"
                   />
