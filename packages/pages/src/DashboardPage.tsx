@@ -10,14 +10,14 @@ import { sectionBase } from "@lightning/utils";
 import { Activity, Award, Clock, Star, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export default function DashboardPage() {
+export function DashboardPage() {
   // const [_currentTime, setCurrentTime] = useState(new Date());
   const [showAllMatches, setShowAllMatches] = useState(false);
   const [expandedMatches, setExpandedMatches] = useState<Set<string>>(
     new Set()
   );
 
-  const { data, loading, error, refetch } = useDashboardData();
+  const { data, isLoading, error, refetch } = useDashboardData();
 
   // // Clock update every second
   // useEffect(() => {
@@ -35,7 +35,7 @@ export default function DashboardPage() {
     };
   }, [refetch]);
 
-  if (loading && !data) {
+  if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
@@ -50,9 +50,11 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-red-400 mb-4">Error loading dashboard: {error}</p>
+          <p className="text-red-400 mb-4">
+            Error loading dashboard: {error?.message}
+          </p>
           <button
-            onClick={refetch}
+            onClick={() => refetch()}
             className="button px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
           >
             Retry
