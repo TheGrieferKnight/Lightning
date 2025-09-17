@@ -1,10 +1,12 @@
 // src/data/index.ts
 
-import { Dictionary, SpellData } from '@lightning/types';
-
 export * from "./mockChampionData";
 export * from "./mockData";
 export * from "./mockSettings";
+
+  export interface Dictionary<T> {
+      [Key: string]: T;
+  }
 
 export const championDataMap: Dictionary<string> = {
   1: "Annie",
@@ -178,25 +180,4 @@ export const championDataMap: Dictionary<string> = {
   902: "Milio",
   910: "Hwei",
   950: "Naafiri",
-};
-
-export const spellDataMap: Dictionary<SpellData> = {
-  1: { name: "SummonerBoost", cooldown: 210 }, // Cleanse
-  3: { name: "SummonerExhaust", cooldown: 210 },
-  4: { name: "SummonerFlash", cooldown: 300 },
-  6: { name: "SummonerHaste", cooldown: 240 }, // Ghost
-  7: { name: "SummonerHeal", cooldown: 240 },
-  11: { name: "SummonerSmite", cooldown: 90 }, // Jungle smite
-  12: { name: "SummonerTeleport", cooldown: 360 },
-  13: { name: "SummonerMana", cooldown: 240 }, // Clarity
-  14: { name: "SummonerDot", cooldown: 180 }, // Ignite
-  21: { name: "SummonerBarrier", cooldown: 210 },
-  30: { name: "SummonerPoroRecall", cooldown: 10 },
-  31: { name: "SummonerPoroThrow", cooldown: 20 },
-  32: { name: "SummonerSnowball", cooldown: 80 }, // Mark/Dash (ARAM)
-  39: { name: "SummonerSnowURFSnowball_Mark", cooldown: 40 },
-  54: { name: "Summoner_UltBookPlaceholder", cooldown: 0 },
-  55: { name: "Summoner_UltBookSmitePlaceholder", cooldown: 0 },
-  2201: { name: "SummonerCherryHold", cooldown: 0 },
-  2202: { name: "SummonerCherryFlash", cooldown: 300 },
 };
