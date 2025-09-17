@@ -1,6 +1,7 @@
 export * from "./components/ChampionIcon";
 export * from "./components/ChampionMasteryCard";
 export * from "./components/MatchHistoryItem";
+export * from "./components/Searchbar";
 export * from "./components/SidebarNav";
 export * from "./components/StatCard";
 export * from "./components/SummonerProfile";

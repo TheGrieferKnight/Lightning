@@ -14,7 +14,7 @@ export const useDashboardData = (summonerName?: string) => {
       setError(null);
 
       // In web builds, use mock data and skip Tauri entirely.
-      if (!isTauri) {
+      if (!isTauri) { 
         setData(mockDashboardData);
         return;
       }
