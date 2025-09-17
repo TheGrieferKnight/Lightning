@@ -6,19 +6,20 @@
     "packages/*",
     "services/*"
   ],
-  "version": "0.1.5",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev:desktop": "vite -c ./apps/desktop/vite.config.ts",
-    "build:web": "tsc -b packages/types packages/utils packages/ui packages/mock apps/web && tsc -p ./apps/web/tsconfig.json && vite build -c ./apps/web/vite.config.ts",
+    "build:web": "tsc -b packages/pages packages/client packages/types packages/utils packages/ui packages/mock apps/web && tsc -p ./apps/web/tsconfig.json && vite build -c ./apps/web/vite.config.ts",
     "build:desktop": "vite build -c ./apps/desktop/vite.config.ts",
-    "typecheck": "tsc -b packages/types packages/utils packages/ui packages/mock apps/web && tsc -p ./apps/web/tsconfig.json",
+    "typecheck": "tsc -b packages/pages packages/client packages/types packages/utils packages/ui packages/mock apps/web && tsc -p ./apps/web/tsconfig.json",
     "preview": "vite preview",
     "tauri": "tauri"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
     "@tanstack/react-query": "^5.89.0",
+    "@tanstack/react-query-devtools": "^5.89.0",
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-opener": "^2.5.0",
     "@tauri-apps/plugin-sql": "^2.3.0",

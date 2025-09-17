@@ -8,4 +8,4 @@ export * from "./components/SummonerProfile";
 export * from "./components/Titlebar";
 export * from "./components/WebTitlebar";
 
-export * from "./hooks/useDashboardData";
+export * from "../../client/src/hooks/useDashboardData";

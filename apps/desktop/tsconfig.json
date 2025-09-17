@@ -13,6 +13,7 @@
   "include": ["src", "../../packages/mock/src/data", "../../packages/mock/src/index.ts", "../../packages/mock/src/mockChampionData.ts", "../../packages/mock/src/mockData.ts", "../../packages/mock/src/mockSettings.ts"],
   "references": [
     { "path": "../../packages/ui" },
+    { "path": "../../packages/pages" },
     { "path": "../../packages/types" },
     { "path": "../../packages/utils" },
     { "path": "../../packages/client" }

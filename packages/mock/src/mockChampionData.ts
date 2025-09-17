@@ -7,7 +7,7 @@ export const mockChampionTierList: ChampionTierList[] = [
       {
         championId: 222,
         name: "Jinx",
-        iconUrl: "15.17.1/img/champion/Jinx.png",
+        iconUrl: "Jinx",
         role: "ADC",
         tier: "S+",
         winRate: 54.3,
