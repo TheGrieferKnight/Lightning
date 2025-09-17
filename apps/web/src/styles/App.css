@@ -5,6 +5,7 @@
 @source "../../../../packages/ui/src";
 @source "../../../../packages/types/src";
 @source "../../../../packages/utils/src";
+@source "../../../../packages/pages/src";
 
 ::-webkit-scrollbar {
   display: none;

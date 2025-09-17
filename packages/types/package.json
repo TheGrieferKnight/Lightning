@@ -1,6 +1,6 @@
 {
   "name": "@lightning/types",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/src/index.ts",
   "module": "dist/src/index.ts",
   "types": "dist/src/index.d.ts",

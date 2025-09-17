@@ -1,11 +1,5 @@
 @import "tailwindcss";
 
-@source "../../../../packages/mock/src";
-@source "../../../../packages/client/src";
-@source "../../../../packages/ui/src";
-@source "../../../../packages/types/src";
-@source "../../../../packages/utils/src";
-
 ::-webkit-scrollbar {
   display: none;
 }

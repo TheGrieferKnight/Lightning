@@ -4,9 +4,11 @@
     "baseUrl": ".",
     "paths": {
       "@lightning/ui": ["packages/ui/src"],
+      "@lightning/client": ["packages/client/src"],
       "@lightning/types": ["packages/types/src"],
       "@lightning/utils": ["packages/utils/src"],
       "@lightning/mock": ["packages/mock/src"],
+      "@lightning/pages": ["packages/pages/src"],
     },
     "target": "ES2020",
     "useDefineForClassFields": true,
@@ -35,5 +37,6 @@
     { "path": "packages/utils"},
     { "path": "packages/client"},
     { "path": "packages/mock"},
+    { "path": "packages/pages"},
   ]
 }

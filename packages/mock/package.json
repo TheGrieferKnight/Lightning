@@ -1,6 +1,6 @@
 {
   "name": "@lightning/mock",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "dist/src/index.ts",
   "module": "dist/src/index.ts",
   "types": "dist/src/index.d.ts",

@@ -5,9 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { SidebarNav, WebTitlebar } from "@lightning/ui";
-import DashboardPage from "./pages/Dashboard";
-import ChampionsPage from "./pages/Champions";
-import SettingsPage from "./pages/Settings";
+import { ChampionsPage, DashboardPage, SettingsPage } from "@lightning/pages";
 
 export default function App() {
   return (

@@ -12,7 +12,7 @@ const roles: (ChampionRole | "All")[] = [
   "Support",
 ];
 
-export default function ChampionsPage() {
+export function ChampionsPage() {
   const [selectedRole, setSelectedRole] = useState<ChampionRole | "All">("All");
   const [sortKey, setSortKey] = useState<keyof ChampionTierData>("winRate");
   const [sortAsc, setSortAsc] = useState(false);

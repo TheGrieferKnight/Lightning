@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Minus, Square, Copy, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { Searchbar } from "./Searchbar";
 
 export const Titlebar: React.FC = () => {
   const win = getCurrentWindow();
@@ -45,6 +46,8 @@ export const Titlebar: React.FC = () => {
           <div className="h-5 w-5 rounded-md bg-avatar-gradient-smooth has-noise-light shadow-md" />
           <span className="text-sm font-semibold text-cyan-200">Lightning</span>
         </div>
+
+        <Searchbar />
 
         {/* Controls */}
         <div data-window-controls className="flex items-center gap-1">

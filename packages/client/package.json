@@ -1,6 +1,6 @@
 {
   "name": "@lightning/client",
-  "version": "0.0.1",
+  "version": "0.2.1",
   "main": "dist/src/index.ts",
   "module": "dist/src/index.ts",
   "types": "dist/src/index.d.ts",

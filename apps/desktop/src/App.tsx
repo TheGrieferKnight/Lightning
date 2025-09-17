@@ -7,9 +7,7 @@ import {
 } from "react-router-dom";
 
 import { SidebarNav } from "@lightning/ui";
-import DashboardPage from "./pages/Dashboard";
-import ChampionsPage from "./pages/Champions";
-import SettingsPage from "./pages/Settings";
+import { ChampionsPage, DashboardPage, SettingsPage } from "@lightning/pages";
 import { Titlebar } from "@lightning/ui";
 
 export default function App() {
