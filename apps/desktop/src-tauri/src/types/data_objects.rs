@@ -224,7 +224,7 @@ pub struct ParticipantDto {
     pub largest_critical_strike: Option<u32>,
     pub largest_killing_spree: Option<u32>,
     pub largest_multi_kill: Option<u32>,
-    pub longest_time_spent_living: Option<f32>,
+    pub longest_time_spent_living: Option<u32>,
     pub magic_damage_dealt: Option<u32>,
     pub magic_damage_dealt_to_champions: Option<u32>,
     pub magic_damage_taken: Option<u32>,
@@ -290,7 +290,7 @@ pub struct ParticipantDto {
     /// See Riot's note on position fields
     pub team_position: Option<String>,
     pub time_ccing_others: Option<f32>,
-    pub time_played: Option<f32>,
+    pub time_played: Option<u32>,
     pub total_ally_jungle_minions_killed: Option<u32>,
     pub total_damage_dealt: Option<u32>,
     pub total_damage_dealt_to_champions: Option<u32>,

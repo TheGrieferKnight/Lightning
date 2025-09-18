@@ -217,7 +217,9 @@ pub async fn build_dashboard(
        updated_at = excluded.updated_at",
         params![&image_path, now],
     )?;
+
     debug!("Summoner name is : {summoner_name}");
+    
     let puuid;
     if summoner_name == "current" {
         puuid = riot_client::fetch_puuid(&app).await?;

@@ -1,7 +1,6 @@
 use anyhow::Result;
 use serde::de::DeserializeOwned;
 use tauri::AppHandle;
-use tracing::debug;
 
 use crate::config::{BASE_URL, REGION};
 use crate::types::data_objects::{LeagueEntryDTO, MatchDto};
@@ -87,7 +86,6 @@ pub async fn fetch_match_ids(puuid: &str, count: usize) -> Result<Vec<String>> {
 pub async fn fetch_match_by_id(match_id: &str) -> Result<(MatchDto, String)> {
     let endpoint = format!("/lol/match/v5/matches/{match_id}");
     let json = fetch_raw(&endpoint).await?;
-    debug!("{json:?}");
     let dto: MatchDto = serde_json::from_str(&json)?;
     Ok((dto, json))
 }
@@ -154,7 +152,6 @@ pub async fn fetch_data(app: &AppHandle, data_to_fetch: DataToFetch) -> Result<R
             );
 
             let match_data: CurrentGameInfo = client.post_json(&endpoint, REGION).await?;
-            debug!("{match_data:?}");
             Ok(Responses::Match(match_data))
         }
 
