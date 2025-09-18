@@ -25,7 +25,6 @@ pub fn save_credentials(client_id: &str, client_secret: &str) -> Result<(), Stri
     secret_entry.set_password(client_secret).string_err()?;
 
     debug!("Stored Client ID and Secret");
-
     Ok(())
 }
 
