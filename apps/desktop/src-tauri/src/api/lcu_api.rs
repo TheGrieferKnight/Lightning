@@ -3,11 +3,11 @@ use reqwest;
 use serde::{Deserialize, Serialize};
 use std::io;
 use std::num::ParseIntError;
+use std::path::PathBuf;
 use sysinfo::System;
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 use tracing::debug;
-use std::path::PathBuf;
 
 /// Errors that can occur when interacting with the LCU API.
 #[derive(Debug)]
@@ -81,43 +81,43 @@ impl Lockfile {
         Self::parse_lockfile_contents(&contents)
     }
 
-	async fn locate_lockfile() -> Result<String, io::Error> {
-	    #[cfg(target_os = "windows")]
-	    let mut sys = System::new_all();
-	    sys.refresh_all();
-	
+    async fn locate_lockfile() -> Result<String, io::Error> {
+        #[cfg(target_os = "windows")]
+        let mut sys = System::new_all();
+        sys.refresh_all();
 
-	    let output_dir = sys
-	        .processes_by_exact_name("LeagueClientUx.exe".as_ref())
-	        .flat_map(|process| process.cmd())
-	        .filter_map(|os| {
-	            os.to_str().and_then(|arg| {
-	                arg.strip_prefix("--output-base-dir=").map(|v| v.to_string())
-	            })
-	        })
-	        .next();
-	
-	    let lockfile_path = match output_dir {
-	        Some(dir) => {
-	            let path = PathBuf::from(dir).join("lockfile");
-	            debug!("Process uses output dir: {}", path.display());
-	            path
-	        }
-	        None => {
-	            debug!("No LeagueClientUx.exe process found with --output-base-dir");
-	            return Err(io::Error::new(
-	                io::ErrorKind::NotFound,
-	                "LeagueClientUx.exe not running or missing --output-base-dir",
-	            ));
-	        }
-	    };
-	
-	    // Open and read lockfile contents
-	    let mut file = File::open(&lockfile_path).await?;
-	    let mut contents = String::new();
-	    file.read_to_string(&mut contents).await?;
-	    Ok(contents)
-	}
+        let output_dir = sys
+            .processes_by_exact_name("LeagueClientUx.exe".as_ref())
+            .flat_map(|process| process.cmd())
+            .filter_map(|os| {
+                os.to_str().and_then(|arg| {
+                    arg.strip_prefix("--output-base-dir=")
+                        .map(|v| v.to_string())
+                })
+            })
+            .next();
+
+        let lockfile_path = match output_dir {
+            Some(dir) => {
+                let path = PathBuf::from(dir).join("lockfile");
+                debug!("Process uses output dir: {}", path.display());
+                path
+            }
+            None => {
+                debug!("No LeagueClientUx.exe process found with --output-base-dir");
+                return Err(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "LeagueClientUx.exe not running or missing --output-base-dir",
+                ));
+            }
+        };
+
+        // Open and read lockfile contents
+        let mut file = File::open(&lockfile_path).await?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).await?;
+        Ok(contents)
+    }
     fn parse_lockfile_contents(contents: &str) -> Result<Self, LockfileError> {
         let parts: Vec<&str> = contents.trim().split(':').collect();
         if parts.len() != 5 {
