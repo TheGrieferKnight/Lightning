@@ -9,6 +9,7 @@ import {
 import { sectionBase } from "@lightning/utils";
 import { Activity, Award, Clock, Star, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 export function DashboardPage() {
   // const [_currentTime, setCurrentTime] = useState(new Date());
@@ -17,7 +18,9 @@ export function DashboardPage() {
     new Set()
   );
 
-  const { data, isLoading, error, refetch } = useDashboardData();
+  const { summonerName } = useParams<{ summonerName: string }>();
+
+  const { data, isLoading, error, refetch } = useDashboardData(summonerName);
 
   // // Clock update every second
   // useEffect(() => {

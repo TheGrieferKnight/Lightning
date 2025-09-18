@@ -24,11 +24,17 @@ export default function App() {
           {/* Main content area */}
           <main className="flex-1 overflow-y-auto px-6 py-6">
             <Routes>
-              <Route path="/" element={<DashboardPage />} />
+              <Route
+                path="/dashboard/:summonerName"
+                element={<DashboardPage />}
+              />
               <Route path="/champions" element={<ChampionsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               {/* Redirect unknown routes to Dashboard */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route
+                path="*"
+                element={<Navigate to="/dashboard/current" replace />}
+              />
             </Routes>
           </main>
         </div>

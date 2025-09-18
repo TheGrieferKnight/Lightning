@@ -97,6 +97,24 @@ pub async fn fetch_top_mastery(puuid: &str) -> Result<Vec<ChampionMasteryDto>> {
     fetch_json(&endpoint).await
 }
 
+pub async fn get_puuid_by_summoner_name(summoner_name: &str) -> Result<String> {
+    let (client_id, client_secret) = load_credentials_internal()?;
+    let client = RiotApiClient::new(BASE_URL.to_string(), client_id, client_secret);
+
+    const REGION: &str = "europe";
+
+    let parts = summoner_name.split("#");
+    let collection: Vec<&str> = parts.collect();
+    let game_name = collection.get(0).map_or("TheGrieferKnight", |v| v);
+    let tag_line = collection.get(1).map_or("42069", |v| v);
+
+    let endpoint = format!("/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}");
+
+    let puuid_data: PuuidData = client.post_json(&endpoint, REGION).await?;
+
+    Ok(puuid_data.puuid)
+}
+
 /// Fetch current live match (if any).
 pub async fn fetch_current_match(app: &AppHandle) -> Result<Option<CurrentGameInfo>> {
     fetch_data(app, DataToFetch::CurrentMatch)
