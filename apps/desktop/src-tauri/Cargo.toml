@@ -46,3 +46,4 @@ sha2 = "0.10.9"
 hex = "0.4.3"
 keyring = { version = "3.6.3", features = ["windows-native"] }
 once_cell = "1.21.3"
+sysinfo = { version = "0.37.0", features = ["windows", "serde"] }
