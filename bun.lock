@@ -41,7 +41,7 @@
     },
     "apps/desktop": {
       "name": "@lightning/desktop",
-      "version": "0.2.0",
+      "version": "1.0.2",
       "dependencies": {
         "@lightning/types": "workspace:*",
         "@lightning/ui": "workspace:*",
@@ -66,7 +66,7 @@
     },
     "apps/web": {
       "name": "@lightning/web",
-      "version": "0.1.4",
+      "version": "1.0.2",
       "dependencies": {
         "@lightning/types": "workspace:*",
         "@lightning/ui": "workspace:*",
@@ -91,21 +91,31 @@
     },
     "packages/client": {
       "name": "@lightning/client",
-      "version": "0.0.1",
+      "version": "0.2.1",
       "dependencies": {
         "react": "19.2.0-canary-fa3feba6-20250623",
       },
     },
     "packages/mock": {
       "name": "@lightning/mock",
-      "version": "0.0.4",
+      "version": "0.0.5",
       "dependencies": {
         "react": "19.2.0-canary-fa3feba6-20250623",
       },
     },
+    "packages/pages": {
+      "name": "@lightning/pages",
+      "version": "0.1.0",
+      "dependencies": {
+        "@lightning/types": "*",
+        "@lightning/ui": "*",
+        "@lightning/utils": "*",
+        "@tanstack/react-query": "^5.0.0",
+      },
+    },
     "packages/types": {
       "name": "@lightning/types",
-      "version": "0.0.2",
+      "version": "0.0.3",
       "dependencies": {
         "lucide-react": "^0.542.0",
         "react": "19.2.0-canary-fa3feba6-20250623",
@@ -127,7 +137,7 @@
     },
     "packages/utils": {
       "name": "@lightning/utils",
-      "version": "1.0.2",
+      "version": "2.0.1",
       "dependencies": {
         "@tauri-apps/api": "^2.8.0",
         "react": "19.2.0-canary-fa3feba6-20250623",
@@ -278,6 +288,8 @@
     "@lightning/desktop": ["@lightning/desktop@workspace:apps/desktop"],
 
     "@lightning/mock": ["@lightning/mock@workspace:packages/mock"],
+
+    "@lightning/pages": ["@lightning/pages@workspace:packages/pages"],
 
     "@lightning/types": ["@lightning/types@workspace:packages/types"],
 
