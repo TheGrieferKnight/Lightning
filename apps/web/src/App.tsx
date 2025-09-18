@@ -16,7 +16,10 @@ export default function App() {
           <SidebarNav />
           <main className="flex-1 overflow-y-auto px-6 py-6">
             <Routes>
-              <Route path="/" element={<DashboardPage />} />
+              <Route
+                path="/dashboard/:summonerName"
+                element={<DashboardPage />}
+              />
               <Route path="/champions" element={<ChampionsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -9,7 +9,7 @@ interface SidebarNavProps {
 
 export const SidebarNav: React.FC<SidebarNavProps> = ({ className = "" }) => {
   const topItems = [
-    { to: "/", label: "Dashboard", icon: Home },
+    { to: "/dashboard/current", label: "Dashboard", icon: Home },
     { to: "/champions", label: "Champions", icon: Sword },
   ];
 

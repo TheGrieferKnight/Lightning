@@ -3,6 +3,7 @@ use anyhow::{anyhow, Context};
 use chrono::Utc;
 use rusqlite::{params, OptionalExtension, TransactionBehavior};
 use std::path::Path;
+use tracing::debug;
 
 use crate::api::riot as riot_client;
 use crate::config::{DASHBOARD_RECENT_MATCH_COUNT, TTL_DASHBOARD_SECS, TTL_SUMMONER_FIELDS_SECS};
@@ -216,12 +217,17 @@ pub async fn build_dashboard(
        updated_at = excluded.updated_at",
         params![&image_path, now],
     )?;
-
-    let puuid = riot_client::fetch_puuid(&app).await?;
+    debug!("Summoner name is : {summoner_name}");
+    let puuid;
+    if summoner_name == "current" {
+        puuid = riot_client::fetch_puuid(&app).await?;
+    } else {
+        puuid = riot_client::get_puuid_by_summoner_name(&summoner_name).await?;
+    }
 
     if let Some(dd) = load_dashboard_from_cache(&conn, &puuid, &image_path, now)? {
         return Ok(dd);
-    }
+    };
 
     // Basic fields: use cache if still fresh
     let mut display_name = summoner_name.clone();
