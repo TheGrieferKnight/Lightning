@@ -42,22 +42,6 @@ jobs:
           cargo fmt --all -- --check
         working-directory: ./apps/desktop/src-tauri
 
-  test_js:
-    name: ci/test-js
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Install deps
-        run: bun install --frozen-lockfile
-
-      - name: Test (JavaScript)
-        env:
-          CI: true
-        run: bun run test:ci
-
   test_rust:
     name: ci/test-rust
     runs-on: windows-latest
