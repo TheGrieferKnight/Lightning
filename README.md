@@ -1,62 +1,46 @@
-# ⚡ Lightning - League of Legends Companion
+# Lightning - League of Legends Companion
 
-> A clean, ad-free League of Legends companion app built with modern web technologies and native performance.
+A simple, ad-free app to go with League of Legends. It's built to run smoothly on your computer using Tauri.
 
-> **🚧 Early Development Notice:** This project is in active development. Core features are being implemented and the app is not yet ready for general use. Star the repo to follow progress!
+**Early Development Notice:** This project is still being built. The main features are in the works, but it's not ready for everyday use yet. Star the repo to keep track of updates!
 
 **Dashboard Mockup**
 
 ![Lightning App Screenshot](screenshots/main-dashboard.png)
 
-## ✨ Features
+## Features
 
-### ✅ Completed Features
+### Completed
+- No ads – Focus on your games without interruptions  
+- Fast performance – Uses Tauri to run quickly  
+- Secure connection to Riot API – Connects safely with unique keys and limits  
+- Match history – Pulls your past games and details from the Riot API  
+- Champion mastery – Shows your mastery levels and points for each champion  
 
-- **🚫 Ad-Free Experience** – Focus on gameplay, not distractions  
-- **⚡ Native Performance** – Built with Tauri for lightning-fast responsiveness  
-- **🏗️ Modern Tech Stack** – React 19 with Compiler optimizations  
-- **🔐 Secure API Integration** – Riot Games API access through secure proxy and per client secret and rate limits   
-- **📊 Match History Integration** – Pulls detailed match history from Riot API  
-- **🏅 Champion Mastery Display** – Shows mastery levels and points for champions  
+### In Progress
+- Full dashboard  
+  - Performance stats _(being worked on)_  
+  - Win rate over time _(planned)_  
+  - Detailed game stats and patterns _(planned)_  
+  - Improve match history _(planned)_
 
-### 🚧 In Development
+## Roadmap
 
-- **🎯 Comprehensive Dashboard**
-  - Advanced performance analytics _(in progress)_
-  - Win rate analysis across different time periods _(planned)_
-  - Advanced gameplay statistics and trends _(planned)_
+This is a flexible list of what's next. You can easily add, remove, or check off items by editing the markdown below (e.g., change `[ ]` to `[x]` for done tasks, or add new lines).
 
----
+### Current Focus
+- [x] Build the main dashboard  
+- [x] Connect match history to Riot API  
+- [x] Add basic champion mastery view  
 
-## 📊 Feature Status
+### Upcoming Features
+- [ ] Live match stats  
+- [ ] Win rate tracking and patterns  
+- [ ] Deeper game analysis  
 
-| Feature                          | Status       |
-|----------------------------------|--------------|
-| Ad-Free Experience               | ✅ Completed |
-| Native Performance (Tauri)       | ✅ Completed |
-| Secure Riot API Integration      | ✅ Completed |
-| Match History Integration        | ✅ Completed |
-| Champion Mastery Display         | ✅ Completed |
-| Win Rate Analytics               | 🚧 Planned   |
-| Advanced Gameplay Insights       | 🚧 Planned   |
-| Team Composition Analysis        | 🚧 Future    |
-| macOS Release                    | 🚧 Future    |
-
----
-
-## 🗺️ Roadmap
-
-### 🔄 Current Focus
-- [x] Core dashboard implementation  
-- [x] Match history integration with Riot API  
-- [x] Basic champion mastery display  
-
-### 🎯 Upcoming Features
-- [ ] Real-time match statistics  
-- [ ] Win rate analytics and trends  
-- [ ] Advanced gameplay insights  
-
-### 🚀 Future Plans
-- [ ] macOS release  
-- [ ] Team composition analysis  
-- [ ] Build recommendations
+### Future Plans
+- [ ] Release for macOS  
+- [ ] Analyze team setups  
+- [ ] Suggest champion  
+- [ ] Suggest rune builds
+- [ ] Suggest item builds
