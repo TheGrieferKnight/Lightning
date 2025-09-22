@@ -26,8 +26,6 @@ A simple, ad-free app to go with League of Legends. It's built to run smoothly o
 
 ## Roadmap
 
-This is a flexible list of what's next. You can easily add, remove, or check off items by editing the markdown below (e.g., change `[ ]` to `[x]` for done tasks, or add new lines).
-
 ### Current Focus
 - [x] Build the main dashboard  
 - [x] Connect match history to Riot API  
