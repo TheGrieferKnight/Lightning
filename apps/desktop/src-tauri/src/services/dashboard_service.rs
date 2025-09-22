@@ -218,12 +218,11 @@ pub async fn build_dashboard(
         params![&image_path, now],
     )?;
 
-    let puuid;
-    if summoner_name == "current" {
-        puuid = riot_client::fetch_puuid(&app).await?;
+    let puuid = if summoner_name == "current" {
+        riot_client::fetch_puuid(&app).await?
     } else {
-        puuid = riot_client::get_puuid_by_summoner_name(&summoner_name).await?;
-    }
+        riot_client::get_puuid_by_summoner_name(&summoner_name).await?
+    };
 
     debug!("Summoner name is : {summoner_name}");
 

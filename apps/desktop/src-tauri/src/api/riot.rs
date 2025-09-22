@@ -105,7 +105,7 @@ pub async fn get_puuid_by_summoner_name(summoner_name: &str) -> Result<String> {
 
     let parts = summoner_name.split("#");
     let collection: Vec<&str> = parts.collect();
-    let game_name = collection.get(0).map_or("TheGrieferKnight", |v| v);
+    let game_name = collection.first().map_or("TheGrieferKnight", |v| v);
     let tag_line = collection.get(1).map_or("42069", |v| v);
 
     let endpoint = format!("/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}");
