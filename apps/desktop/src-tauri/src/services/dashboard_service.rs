@@ -218,11 +218,12 @@ pub async fn build_dashboard(
         params![&image_path, now],
     )?;
 
-    let puuid = if summoner_name == "current" {
-        riot_client::fetch_puuid(&app).await?
+    let puuid;
+    if summoner_name == "current" {
+        puuid = riot_client::fetch_puuid(&app).await?;
     } else {
-        riot_client::get_puuid_by_summoner_name(&summoner_name).await?
-    };
+        puuid = riot_client::get_puuid_by_summoner_name(&summoner_name).await?;
+    }
 
     debug!("Summoner name is : {summoner_name}");
 
@@ -570,7 +571,174 @@ pub async fn build_dashboard(
         stats: Stats {
             total_games,
             avg_game_time,
-        },
         image_path,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::{Connection, params};
+    use chrono::Utc;
+
+    // Helper: construct a LeagueEntryDTO with defaults, overriding selected fields
+    fn league_entry_with(queue_type: &str, tier: &str, wins: u32, losses: u32) -> LeagueEntryDTO {
+        LeagueEntryDTO {
+            league_id: String::new(),
+            puuid: String::new(),
+            queue_type: queue_type.to_string(),
+            tier: tier.to_string(),
+            rank: String::new(),
+            league_points: 0,
+            wins,
+            losses,
+            hot_streak: false,
+            veteran: false,
+            fresh_blood: false,
+            inactive: false,
+            mini_series: None,
+        }
+    }
+
+    #[test]
+    fn find_ranked_solo_prefers_case_insensitive_match() {
+        let entries = vec\![
+            league_entry_with("RANKED_FLEX_SR", "GOLD", 10, 5),
+            league_entry_with("ranked_solo_5x5", "PLATINUM", 22, 18), // lowercase to verify case-insensitive
+        ];
+        let got = find_ranked_solo_or_default(&entries);
+        assert_eq\!(got.queue_type, "ranked_solo_5x5");
+        assert_eq\!(got.tier, "PLATINUM");
+        assert_eq\!((got.wins, got.losses), (22, 18));
+    }
+
+    #[test]
+    fn find_ranked_solo_returns_default_when_missing() {
+        let entries = vec\![
+            league_entry_with("RANKED_FLEX_SR", "GOLD", 10, 5),
+            league_entry_with("NORMAL_DRAFT", "SILVER", 3, 7),
+        ];
+        let got = find_ranked_solo_or_default(&entries);
+        assert_eq\!(got.queue_type, "RANKED_SOLO_5x5");
+        assert_eq\!(got.tier, "UNRANKED");
+        assert_eq\!(got.wins, 0);
+        assert_eq\!(got.losses, 0);
+        assert_eq\!(got.league_points, 0);
+        assert\!(got.rank.is_empty());
+        assert\!(got.league_id.is_empty());
+        assert\!(got.puuid.is_empty());
+        assert\!(got.mini_series.is_none());
+    }
+
+    // Minimal MatchDto/ParticipantDto builders:
+    // Only touch fields used by get_participant_by_puuid to avoid populating the entire struct graph.
+    fn match_with_participants(puuids: &[Option<&str>]) -> MatchDto {
+        MatchDto {
+            metadata: Default::default(),
+            info: InfoDto {
+                // Only participants is accessed by get_participant_by_puuid
+                participants: Some(puuids.iter().map(|popt| {
+                    ParticipantDto {
+                        puuid: popt.map(|s| s.to_string()),
+                        // Remaining fields are not read by get_participant_by_puuid
+                        ..Default::default()
+                    }
+                }).collect()),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn get_participant_by_puuid_finds_exact_match() {
+        let target = "PUUID-123";
+        let m = match_with_participants(&[Some("X"), None, Some(target), Some("Y")]);
+        let got = get_participant_by_puuid(&m, target);
+        assert\!(got.is_some(), "Expected a participant match");
+        assert_eq\!(got.unwrap().puuid.as_deref(), Some(target));
+    }
+
+    #[test]
+    fn get_participant_by_puuid_returns_none_when_absent() {
+        let m = match_with_participants(&[Some("A"), Some("B")]);
+        assert\!(get_participant_by_puuid(&m, "C").is_none());
+    }
+
+    #[test]
+    fn get_participant_by_puuid_handles_none_participants() {
+        let m = MatchDto { info: InfoDto { participants: None, ..Default::default() }, ..Default::default() };
+        assert\!(get_participant_by_puuid(&m, "anything").is_none());
+    }
+
+    // Setup minimal schema required to exercise load_dashboard_from_cache early returns.
+    fn create_minimal_tables(conn: &Connection) {
+        conn.execute_batch(r#"
+            CREATE TABLE IF NOT EXISTS summoners (
+                puuid TEXT PRIMARY KEY,
+                display_name TEXT NOT NULL,
+                level INTEGER NOT NULL,
+                profile_icon_id INTEGER NOT NULL,
+                profile_icon_path TEXT NOT NULL,
+                rank_league_id TEXT NOT NULL,
+                rank_queue_type TEXT NOT NULL,
+                rank_tier TEXT NOT NULL,
+                rank_division TEXT NOT NULL,
+                rank_lp INTEGER NOT NULL,
+                rank_wins INTEGER NOT NULL,
+                rank_losses INTEGER NOT NULL,
+                rank_hot_streak INTEGER NOT NULL,
+                rank_veteran INTEGER NOT NULL,
+                rank_fresh_blood INTEGER NOT NULL,
+                rank_inactive INTEGER NOT NULL,
+                rank_mini_series_json TEXT,
+                win_rate INTEGER NOT NULL,
+                recent_games INTEGER NOT NULL,
+                favorite_role TEXT NOT NULL,
+                main_champion TEXT NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+        "#).unwrap();
+        // We deliberately avoid creating other tables because our tests early-return before they are used.
+    }
+
+    #[test]
+    fn load_cache_returns_none_when_no_row() {
+        let conn = Connection::open_in_memory().unwrap();
+        create_minimal_tables(&conn);
+        let puuid = "nope";
+        let now = Utc::now().timestamp();
+        let got = load_dashboard_from_cache(&conn, puuid, "/img", now).unwrap();
+        assert\!(got.is_none());
+    }
+
+    #[test]
+    fn load_cache_returns_none_when_expired() {
+        let conn = Connection::open_in_memory().unwrap();
+        create_minimal_tables(&conn);
+        let puuid = "expired-puuid";
+        let now = Utc::now().timestamp();
+
+        // Insert a row that is older than TTL_DASHBOARD_SECS
+        let expired_at = now - (TTL_DASHBOARD_SECS + 1);
+        conn.execute(
+            r#"INSERT INTO summoners
+               (puuid, display_name, level, profile_icon_id, profile_icon_path,
+                rank_league_id, rank_queue_type, rank_tier, rank_division, rank_lp,
+                rank_wins, rank_losses, rank_hot_streak, rank_veteran, rank_fresh_blood,
+                rank_inactive, rank_mini_series_json, win_rate, recent_games,
+                favorite_role, main_champion, updated_at)
+               VALUES (?1, 'Name', 10, 1, '/path',
+                '', 'RANKED_SOLO_5x5', 'IRON', '', 0,
+                0, 0, 0, 0, 0,
+                0, NULL, 0, 0,
+                'UNKNOWN', '', ?2)
+            "#,
+            params\![puuid, expired_at],
+        ).unwrap();
+
+        let got = load_dashboard_from_cache(&conn, puuid, "/img", now).unwrap();
+        assert\!(got.is_none(), "Expected None when cache is expired");
+    }
+}
 }
