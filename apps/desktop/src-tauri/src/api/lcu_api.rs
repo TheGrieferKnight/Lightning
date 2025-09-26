@@ -86,6 +86,14 @@ impl Lockfile {
         let mut sys = System::new_all();
         sys.refresh_all();
 
+        let args = sys
+            .processes_by_exact_name("LeagueClientUx.exe".as_ref())
+            .flat_map(|process| process.cmd())
+            .filter_map(|os| os.to_str())
+            .next();
+
+        debug!(args);
+
         let output_dir = sys
             .processes_by_exact_name("LeagueClientUx.exe".as_ref())
             .flat_map(|process| process.cmd())
