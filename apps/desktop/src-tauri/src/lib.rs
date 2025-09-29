@@ -33,11 +33,6 @@ pub fn run() {
 
     info!("Checking if GPU Acceleration is enabled");
 
-    if std::env::var("WEBVIEW2_DISABLE_GPU").is_ok() {
-        warn!("[warning] WEBVIEW2_DISABLE_GPU was set; unsetting to keep GPU enabled.");
-        std::env::remove_var("WEBVIEW2_DISABLE_GPU");
-    }
-
     info!("Starting Tauri application...");
 
     tauri::Builder::default()
