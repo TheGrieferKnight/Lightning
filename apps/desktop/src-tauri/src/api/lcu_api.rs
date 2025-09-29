@@ -115,17 +115,17 @@ impl Lockfile {
         if let Some(cwd) = proc.cwd() {
             candidates.push(cwd.join("lockfile"));
         }
-        if let Some(exe) = proc.exe() {
-            if let Some(dir) = exe.parent() {
-                candidates.push(dir.join("lockfile"));
-            }
+        if let Some(exe) = proc.exe()
+            && let Some(dir) = exe.parent()
+        {
+            candidates.push(dir.join("lockfile"));
         }
 
         // Fallback: parse --output-base-dir if cwd/exe didn't work
-        if candidates.iter().all(|p| !p.exists()) {
-            if let Some(base) = parse_output_base_dir(proc.cmd()) {
-                candidates.push(Path::new(&base).join("lockfile"));
-            }
+        if candidates.iter().all(|p| !p.exists())
+            && let Some(base) = parse_output_base_dir(proc.cmd())
+        {
+            candidates.push(Path::new(&base).join("lockfile"));
         }
 
         // Optional last-resort default
@@ -241,10 +241,10 @@ fn parse_output_base_dir(cmd: &[OsString]) -> Option<String> {
         if let Some(rest) = s.strip_prefix("--output-base-dir=") {
             return Some(trim_quotes(rest));
         }
-        if s == "--output-base-dir" {
-            if let Some(next) = cmd.get(i + 1) {
-                return Some(trim_quotes(&next.to_string_lossy()));
-            }
+        if s == "--output-base-dir"
+            && let Some(next) = cmd.get(i + 1)
+        {
+            return Some(trim_quotes(&next.to_string_lossy()));
         }
     }
     None

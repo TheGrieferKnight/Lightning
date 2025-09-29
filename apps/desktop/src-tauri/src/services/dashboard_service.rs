@@ -262,12 +262,11 @@ pub async fn build_dashboard(
             },
         )
         .optional()?
+        && now - updated_at <= TTL_SUMMONER_FIELDS_SECS
     {
-        if now - updated_at <= TTL_SUMMONER_FIELDS_SECS {
-            level = lvl as u32;
-            profile_icon_id = icon_id as u32;
-            profile_icon_path = icon_path;
-        }
+        level = lvl as u32;
+        profile_icon_id = icon_id as u32;
+        profile_icon_path = icon_path;
     }
 
     if level == 0 || profile_icon_id == 0 || profile_icon_path.is_empty() {

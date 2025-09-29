@@ -20,7 +20,7 @@ use commands::current_match::*;
 use commands::dashboard::*;
 use utils::credentials::{load_credentials, save_credentials};
 // Other imports
-use tracing::{info, warn};
+use tracing::info;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
