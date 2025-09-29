@@ -1,7 +1,7 @@
 use crate::repo::participants_repo::{get_participants, upsert_participants};
 use crate::types::dashboard::{Match, MatchDetails};
 use anyhow::Context;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 
 pub fn get_dashboard_matches(conn: &Connection, puuid: &str) -> anyhow::Result<Vec<Match>> {
     let mut stmt = conn.prepare(

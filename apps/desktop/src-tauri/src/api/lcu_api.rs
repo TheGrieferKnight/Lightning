@@ -1,4 +1,4 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use reqwest;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
@@ -7,7 +7,7 @@ use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System, UpdateKind};
 use tokio::fs;
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 use tracing::debug;
 
 /// Errors that can occur when interacting with the LCU API.

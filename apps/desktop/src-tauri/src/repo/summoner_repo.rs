@@ -1,5 +1,5 @@
 use anyhow::Context;
-use rusqlite::{params, Transaction};
+use rusqlite::{Transaction, params};
 
 use crate::types::data_objects::LeagueEntryDTO;
 

@@ -1,5 +1,5 @@
 use crate::config::BYPASS_TOKEN;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use chrono::Utc;
 use hmac::{Hmac, Mac};
 use reqwest::{Client, Response};
