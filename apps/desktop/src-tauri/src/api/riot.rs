@@ -19,6 +19,25 @@ pub enum DataToFetch {
     SummonerName,
 }
 
+/// Obtain the account Puuid, preferring a cached file and falling back to the Riot API.
+///
+/// Attempts to load previously saved `PuuidData` from local storage; if not present, queries
+/// the Riot API for the account by Riot ID (game name and tag line), saves the retrieved
+/// `PuuidData` to local storage, and returns it.
+///
+/// # Returns
+///
+/// `PuuidData` containing the account Puuid on success.
+///
+/// # Examples
+///
+/// ```
+/// # async fn example(app: &tauri::AppHandle, client: &crate::RiotApiClient) -> anyhow::Result<()> {
+/// let puuid_data = crate::api::puuid::get_puuid(app, client).await?;
+/// println!("PUUID: {}", puuid_data.puuid);
+/// # Ok(())
+/// # }
+/// ```
 async fn get_puuid(app: &AppHandle, client: &RiotApiClient) -> Result<PuuidData> {
     // 1. Try loading from file
     if let Ok(puuid_data) = crate::utils::file::load_puuid(app).await {

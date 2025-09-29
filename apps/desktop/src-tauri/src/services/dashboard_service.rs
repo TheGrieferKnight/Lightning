@@ -200,6 +200,37 @@ fn load_dashboard_from_cache(
     }))
 }
 
+/// Builds a summoner dashboard by loading a fresh cached version when available or fetching,
+/// assembling, and persisting the required data (summoner fields, recent matches, champion mastery,
+/// live game, and aggregated stats).
+///
+/// The function will:
+/// - Use the provided `tauri::AppHandle` to access app data and the Riot client.
+/// - Treat `summoner_name == "current"` as a request to resolve the current account's puuid.
+/// - Attempt to return a cached DashboardData when the cache is fresh; otherwise fetch and store
+///   fresh data atomically before returning it.
+///
+/// # Parameters
+///
+/// - `app`: Tauri application handle used for configuration, storage paths, and API access.
+/// - `summoner_name`: Summoner identifier or the literal `"current"` to indicate the currently
+///   signed-in account; when not `"current"`, a name may include a Discord-style suffix (e.g. `Name#1234`)
+///   — the displayed name will use the portion before `#` if present.
+///
+/// # Returns
+///
+/// `DashboardData` containing populated `summoner`, `matches`, `champion_mastery`, `stats`, and `image_path`.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use crate::commands::dashboard::service::build_dashboard;
+/// # async fn run_example(app: tauri::AppHandle) -> anyhow::Result<()> {
+/// let dashboard = build_dashboard(app, "current".to_string()).await?;
+/// println!("Summoner: {}", dashboard.summoner.display_name);
+/// # Ok(())
+/// # }
+/// ```
 pub async fn build_dashboard(
     app: tauri::AppHandle,
     summoner_name: String,

@@ -81,6 +81,27 @@ impl Lockfile {
         Self::parse_lockfile_contents(&contents)
     }
 
+    /// Locate the League Client lockfile from a running LeagueClientUx.exe process and return its contents.
+    ///
+    /// This inspects running processes to find a LeagueClientUx.exe instance whose command line
+    /// includes an `--output-base-dir=<dir>` argument, constructs the path `<dir>/lockfile`, and
+    /// asynchronously reads and returns that file's UTF-8 contents. If no matching process or
+    /// argument is found, the function returns an `io::Error` with `ErrorKind::NotFound`. Any I/O
+    /// errors encountered while opening or reading the file are propagated.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # // Example requires an async runtime such as Tokio.
+    /// # #[tokio::test]
+    /// # async fn example_locate_lockfile() {
+    /// let result = crate::locate_lockfile().await;
+    /// match result {
+    ///     Ok(contents) => println!("Lockfile contents: {}", contents),
+    ///     Err(e) => eprintln!("Failed to locate/read lockfile: {}", e),
+    /// }
+    /// # }
+    /// ```
     async fn locate_lockfile() -> Result<String, io::Error> {
         #[cfg(target_os = "windows")]
         let mut sys = System::new_all();
