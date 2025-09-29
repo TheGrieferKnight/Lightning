@@ -4,6 +4,28 @@ use crate::types::data_objects::{MatchDto, ObjectiveDto};
 use anyhow::Context;
 use rusqlite::{Connection, params};
 
+/// Upserts a complete match record and all related metadata into the SQLite database.
+///
+/// This writes the raw JSON payload and synchronizes derived tables (matches, match_raw,
+/// match_metadata_participants, match_teams, match_team_bans, match_team_objectives,
+/// match_participants) so the database reflects the provided MatchDto. Optional fields in
+/// the DTO are safely defaulted; JSON subobjects for missions/perks/challenges are serialized
+/// or default to "{}".
+///
+/// On success, returns `Ok(())`. On failure, returns an error with contextual information
+/// for the failing upsert step.
+///
+/// # Examples
+///
+/// ```
+/// # use rusqlite::Connection;
+/// # use anyhow::Result;
+/// # fn example(conn: &Connection, md: &crate::repo::dto::MatchDto, raw: &str) -> Result<()> {
+/// let now = 1_700_000_000i64;
+/// crate::repo::match_repo::store_match_full(conn, md, raw, now)?;
+/// # Ok(())
+/// # }
+/// ```
 pub fn store_match_full(
     conn: &Connection,
     md: &MatchDto,

@@ -200,6 +200,31 @@ fn load_dashboard_from_cache(
     }))
 }
 
+/// Builds a dashboard snapshot for a summoner, using cached data when fresh and otherwise fetching,
+/// assembling, and persisting the latest data required to render the dashboard view.
+///
+/// The function returns a complete DashboardData structure containing summoner info, recent matches,
+/// champion mastery, stats, and the application image path. If `summoner_name` is the literal
+/// `"current"`, the current account is used; otherwise the provided summoner name is looked up.
+///
+/// # Parameters
+///
+/// - `summoner_name`: the summoner identifier to build the dashboard for. Use `"current"` to target
+///   the currently authenticated account.
+///
+/// # Returns
+///
+/// `DashboardData` containing the assembled dashboard snapshot for the requested summoner.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use tauri::AppHandle;
+/// # async fn example(app: AppHandle) -> anyhow::Result<()> {
+/// let data = crate::commands::dashboard::service::build_dashboard(app, "current".into()).await?;
+/// println!("Display name: {}", data.summoner.display_name);
+/// # Ok(()) }
+/// ```
 pub async fn build_dashboard(
     app: tauri::AppHandle,
     summoner_name: String,

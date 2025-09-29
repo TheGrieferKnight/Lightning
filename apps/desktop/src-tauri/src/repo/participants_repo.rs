@@ -1,6 +1,22 @@
 use crate::types::dashboard::{Participant, Team};
 use rusqlite::{Connection, params};
 
+/// Fetches the two teams of participants for the given match.
+///
+—
+/// # Returns
+///
+/// `Ok([Team; 2])` containing two teams; each team is an array of five `Participant` structs.
+///
+/// # Examples
+///
+/// ```
+/// // `conn` should be an open rusqlite::Connection and the `participants` table populated.
+/// let teams = get_participants(&conn, "match123").unwrap();
+/// assert_eq!(teams.len(), 2);
+/// assert_eq!(teams[0].len(), 5);
+/// assert_eq!(teams[1].len(), 5);
+/// ```
 pub fn get_participants(conn: &Connection, match_id: &str) -> rusqlite::Result<[Team; 2]> {
     let mut stmt = conn.prepare(
         "SELECT team, summoner_name, champion_name, kills, deaths, assists, lane,

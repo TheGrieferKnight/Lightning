@@ -77,6 +77,27 @@ pub struct Lockfile {
 }
 
 impl Lockfile {
+    /// Locate the League Client lockfile on the host, read its contents, and parse them into a `Lockfile`.
+    ///
+    /// This performs discovery (with retries) to find the lockfile, then parses the colon-separated contents
+    /// into the struct fields.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(Self)` containing parsed lockfile information on success, `Err(LockfileError)` if discovery or parsing fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # tokio::main
+    /// async fn main() {
+    ///     // Attempt to locate and parse the lockfile; handle absence gracefully.
+    ///     match crate::Lockfile::new().await {
+    ///         Ok(lockfile) => println!("Found lockfile on port {}", lockfile.api_port),
+    ///         Err(e) => eprintln!("Could not obtain lockfile: {}", e),
+    ///     }
+    /// }
+    /// ```
     async fn new() -> Result<Self, LockfileError> {
         let contents = Self::locate_lockfile().await?;
         Self::parse_lockfile_contents(&contents)
@@ -86,6 +107,27 @@ impl Lockfile {
     // - Prefer cwd/exe paths from the process (no fragile arg parsing).
     // - Fallback to parsing --output-base-dir (handles both forms and quotes).
     // - Short retries for when the file appears slightly later.
+    /// Locate and read the League Client (LCU) lockfile and return its contents.
+    ///
+    /// Attempts candidate paths derived from the running LCU process (current working directory, executable directory, or an `--output-base-dir` command argument) and a last-resort default path. Each candidate is retried briefly if not immediately present.
+    ///
+    /// # Returns
+    /// The raw lockfile contents as a `String` on success.
+    ///
+    /// # Errors
+    /// Returns an `io::Error` if the LCU process cannot be found or if reading the lockfile fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     match crate::locate_lockfile().await {
+    ///         Ok(contents) => println!("Lockfile: {}", contents),
+    ///         Err(err) => eprintln!("Error locating lockfile: {}", err),
+    ///     }
+    /// }
+    /// ```
     async fn locate_lockfile() -> Result<String, io::Error> {
         let mut sys = System::new_with_specifics(
             RefreshKind::nothing().with_processes(
@@ -153,6 +195,23 @@ impl Lockfile {
         ))
     }
 
+    /// Parse lockfile contents into a `Lockfile`.
+    ///
+    /// Expects `contents` to be a single line with exactly five colon-separated fields:
+    /// `<client>:<pid>:<api_port>:<password>:<protocol>`. Returns a `LockfileError::Parse`
+    /// if the field count is not five or if numeric fields cannot be parsed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let contents = "leagueclientux:12345:2999:secretpassword:https";
+    /// let lockfile = parse_lockfile_contents(contents).unwrap();
+    /// assert_eq!(lockfile._league_client, "leagueclientux");
+    /// assert_eq!(lockfile._process_id, 12345);
+    /// assert_eq!(lockfile.api_port, 2999);
+    /// assert_eq!(lockfile.password, "secretpassword");
+    /// assert_eq!(lockfile._protocol, "https");
+    /// ```
     fn parse_lockfile_contents(contents: &str) -> Result<Self, LockfileError> {
         let parts: Vec<&str> = contents.trim().split(':').collect();
         if parts.len() != 5 {
@@ -187,6 +246,25 @@ impl Lockfile {
 }
 
 impl std::fmt::Display for Lockfile {
+    /// Formats the Lockfile for human-readable display with the password redacted.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let lf = Lockfile {
+    ///     _league_client: "leagueclient".into(),
+    ///     _process_id: 1234,
+    ///     api_port: 8080,
+    ///     password: "supersecret".into(),
+    ///     _protocol: "https".into(),
+    /// };
+    /// let s = format!("{}", lf);
+    /// assert!(s.contains("Client: leagueclient"));
+    /// assert!(s.contains("PID: 1234"));
+    /// assert!(s.contains("API Port: 8080"));
+    /// assert!(s.contains("Password: [HIDDEN]"));
+    /// assert!(s.contains("Protocol: https"));
+    /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -230,11 +308,45 @@ impl LeagueApiClient {
         Ok(self.get_current_summoner().await?.game_name)
     }
 
+    /// Get the current account's tag line.
+    ///
+    /// The tag line is the player's account suffix (region/realm tag) associated with their Riot account.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tokio::runtime::Runtime;
+    ///
+    /// let rt = Runtime::new().unwrap();
+    /// let client = rt.block_on(LeagueApiClient::new()).unwrap();
+    /// let tag_line = rt.block_on(client.get_tag_line()).unwrap();
+    /// assert!(!tag_line.is_empty());
+    /// ```
     pub async fn get_tag_line(&self) -> Result<String, LockfileError> {
         Ok(self.get_current_summoner().await?.tag_line)
     }
 }
 
+/// Extracts the value given to the `--output-base-dir` command-line option.
+///
+/// Recognizes both `--output-base-dir=VALUE` and `--output-base-dir VALUE` forms.
+/// Surrounding single or double quotes and surrounding whitespace are removed from the returned value.
+///
+/// # Returns
+///
+/// `Some(String)` containing the parsed, trimmed value if the option is present, `None` otherwise.
+///
+/// # Examples
+///
+/// ```
+/// use std::ffi::OsString;
+///
+/// let args = &[OsString::from("--foo"), OsString::from("--output-base-dir=/path/to/base")];
+/// assert_eq!(parse_output_base_dir(args), Some("/path/to/base".to_string()));
+///
+/// let args = &[OsString::from("--output-base-dir"), OsString::from(r#""C:\Program Files\Riot Games""#)];
+/// assert_eq!(parse_output_base_dir(args), Some(r#"C:\Program Files\Riot Games"#.to_string()));
+/// ```
 fn parse_output_base_dir(cmd: &[OsString]) -> Option<String> {
     for (i, a) in cmd.iter().enumerate() {
         let s = a.to_string_lossy();
@@ -250,6 +362,18 @@ fn parse_output_base_dir(cmd: &[OsString]) -> Option<String> {
     None
 }
 
+/// Remove surrounding double quotes, single quotes, and spaces from a string.
+///
+/// Leading and trailing occurrences of `"` , `'`, and space are removed; interior characters are unchanged.
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(trim_quotes("\"hello\""), "hello");
+/// assert_eq!(trim_quotes("' hello '"), "hello");
+/// assert_eq!(trim_quotes("  'a'  "), "a");
+/// assert_eq!(trim_quotes("no_quotes"), "no_quotes");
+/// ```
 fn trim_quotes(s: &str) -> String {
     s.trim_matches(|c| c == '"' || c == '\'' || c == ' ')
         .to_string()

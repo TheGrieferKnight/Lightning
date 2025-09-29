@@ -2,6 +2,32 @@ use crate::types::response::ChampionMasteryDto;
 use anyhow::Context;
 use rusqlite::{Transaction, params};
 
+/// Replace a player's champion mastery records in the database with the supplied slice.
+///
+/// This deletes any existing mastery rows for `puuid` and inserts the provided `mastery` entries,
+/// preserving the slice order as the stored `rank_order`.
+///
+/// # Parameters
+///
+/// - `puuid`: player unique identifier whose mastery rows will be replaced.
+/// - `mastery`: slice of champion mastery DTOs to insert.
+/// - `now`: timestamp used for the `updated_at` column (epoch milliseconds).
+///
+/// # Returns
+///
+/// `Ok(())` if all deletions and inserts complete successfully, `Err` if any database operation fails
+/// (errors are returned with context `"delete old masteries"` or `"insert mastery row"`).
+///
+/// # Examples
+///
+/// ```no_run
+/// # use rusqlite::Transaction;
+/// # use anyhow::Result;
+/// # use crate::dto::ChampionMasteryDto;
+/// fn replace_example(tx: &Transaction, puuid: &str, mastery: &[ChampionMasteryDto], now: i64) -> Result<()> {
+///     crate::repo::replace_masteries(tx, puuid, mastery, now)
+/// }
+/// ```
 pub fn replace_masteries(
     tx: &Transaction,
     puuid: &str,

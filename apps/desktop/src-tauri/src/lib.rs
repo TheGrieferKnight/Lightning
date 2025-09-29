@@ -22,6 +22,19 @@ use utils::credentials::{load_credentials, save_credentials};
 // Other imports
 use tracing::{info, warn};
 
+/// Start the Tauri application and initialize the application's logging.
+///
+/// This function configures the tracing subscriber for logging, logs startup
+/// information, registers plugins and invoke handlers, and runs the Tauri
+/// application event loop.
+///
+/// # Examples
+///
+/// ```no_run
+/// fn main() {
+///     run();
+/// }
+/// ```
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Initialize tracing subscriber (logging system)

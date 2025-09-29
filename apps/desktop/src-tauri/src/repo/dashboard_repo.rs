@@ -3,6 +3,26 @@ use crate::types::dashboard::{Match, MatchDetails};
 use anyhow::Context;
 use rusqlite::{Connection, params};
 
+/// Fetches all dashboard matches for the given player UUID, returning each match with its nested details.
+///
+/// The returned vector contains `Match` entries ordered by match timestamp descending. Each `Match` includes
+/// top-level fields (match id, game id, champion, result, kda, duration, game mode, timestamp, cs) and a
+/// `MatchDetails` struct populated from the database (participants, towers/inhibitors destroyed, gold earned,
+/// and per-team KDA).
+///
+/// # Returns
+///
+/// A `Vec<Match>` containing all dashboard matches for `puuid`, ordered by newest first.
+///
+/// # Examples
+///
+/// ```no_run
+/// use rusqlite::Connection;
+/// // assume get_dashboard_matches is in scope
+/// let conn = Connection::open_in_memory().unwrap();
+/// let puuid = "some-player-uuid";
+/// let _matches = get_dashboard_matches(&conn, puuid).unwrap();
+/// ```
 pub fn get_dashboard_matches(conn: &Connection, puuid: &str) -> anyhow::Result<Vec<Match>> {
     let mut stmt = conn.prepare(
         "SELECT match_id, game_id, champion, result, kda, duration,
