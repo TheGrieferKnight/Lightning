@@ -19,7 +19,6 @@ pub enum DataToFetch {
     SummonerName,
 }
 
-/// Private helper: get PUUID (cached or fetch from Riot API).
 async fn get_puuid(app: &AppHandle, client: &RiotApiClient) -> Result<PuuidData> {
     // 1. Try loading from file
     if let Ok(puuid_data) = crate::utils::file::load_puuid(app).await {

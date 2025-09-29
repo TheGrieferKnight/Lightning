@@ -5,6 +5,7 @@ use rusqlite::{params, OptionalExtension, TransactionBehavior};
 use std::path::Path;
 use tracing::debug;
 
+use crate::api::lcu::get_game_name_simple;
 use crate::api::riot as riot_client;
 use crate::config::{DASHBOARD_RECENT_MATCH_COUNT, TTL_DASHBOARD_SECS, TTL_SUMMONER_FIELDS_SECS};
 use crate::db::init::{get_app_data_dir_only, init_database};
@@ -224,6 +225,21 @@ pub async fn build_dashboard(
         riot_client::get_puuid_by_summoner_name(&summoner_name).await?
     };
 
+    let temp = summoner_name
+        .clone()
+        .split("#")
+        .collect::<Vec<&str>>()
+        .first()
+        .map_or("TheGrieferKnight", |v| v)
+        .to_string();
+
+    let displayed_name = if summoner_name == "current" {
+        drop(temp);
+        get_game_name_simple().await?
+    } else {
+        temp
+    };
+
     debug!("Summoner name is : {summoner_name}");
 
     if let Some(dd) = load_dashboard_from_cache(&conn, &puuid, &image_path, now)? {
@@ -231,7 +247,7 @@ pub async fn build_dashboard(
     };
 
     // Basic fields: use cache if still fresh
-    let mut display_name = summoner_name.clone();
+    let mut display_name = displayed_name;
     let mut level: u32 = 0;
     let mut profile_icon_id: u32 = 0;
     let mut profile_icon_path = String::new();
