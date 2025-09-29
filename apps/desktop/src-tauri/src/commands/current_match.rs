@@ -1,5 +1,5 @@
 use crate::api::lcu::{get_game_name_simple, get_tag_line_simple};
-use crate::api::riot::{fetch_data, fetch_puuid, DataToFetch};
+use crate::api::riot::{DataToFetch, fetch_data, fetch_puuid};
 use crate::types::{match_data::CurrentGameParticipant, response::Responses};
 
 pub trait ToStringErr<T> {

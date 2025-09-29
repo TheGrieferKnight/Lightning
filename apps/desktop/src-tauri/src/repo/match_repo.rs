@@ -2,7 +2,7 @@
 use crate::config::REGION;
 use crate::types::data_objects::{MatchDto, ObjectiveDto};
 use anyhow::Context;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 
 pub fn store_match_full(
     conn: &Connection,

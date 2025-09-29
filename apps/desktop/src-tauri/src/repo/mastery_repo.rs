@@ -1,6 +1,6 @@
 use crate::types::response::ChampionMasteryDto;
 use anyhow::Context;
-use rusqlite::{params, Transaction};
+use rusqlite::{Transaction, params};
 
 pub fn replace_masteries(
     tx: &Transaction,

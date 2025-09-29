@@ -1,5 +1,5 @@
 use crate::types::dashboard::{Participant, Team};
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 
 pub fn get_participants(conn: &Connection, match_id: &str) -> rusqlite::Result<[Team; 2]> {
     let mut stmt = conn.prepare(

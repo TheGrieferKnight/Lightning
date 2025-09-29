@@ -20,7 +20,7 @@ use commands::current_match::*;
 use commands::dashboard::*;
 use utils::credentials::{load_credentials, save_credentials};
 // Other imports
-use tracing::{info, warn};
+use tracing::info;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -32,11 +32,6 @@ pub fn run() {
         .init();
 
     info!("Checking if GPU Acceleration is enabled");
-
-    if std::env::var("WEBVIEW2_DISABLE_GPU").is_ok() {
-        warn!("[warning] WEBVIEW2_DISABLE_GPU was set; unsetting to keep GPU enabled.");
-        std::env::remove_var("WEBVIEW2_DISABLE_GPU");
-    }
 
     info!("Starting Tauri application...");
 

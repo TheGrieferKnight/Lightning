@@ -1,7 +1,7 @@
 // src-tauri/src/commands/dashboard/service.rs
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use chrono::Utc;
-use rusqlite::{params, OptionalExtension, TransactionBehavior};
+use rusqlite::{OptionalExtension, TransactionBehavior, params};
 use std::path::Path;
 use tracing::debug;
 
@@ -225,19 +225,14 @@ pub async fn build_dashboard(
         riot_client::get_puuid_by_summoner_name(&summoner_name).await?
     };
 
-    let temp = summoner_name
-        .clone()
-        .split("#")
-        .collect::<Vec<&str>>()
-        .first()
-        .map_or("TheGrieferKnight", |v| v)
-        .to_string();
-
-    let displayed_name = if summoner_name == "current" {
-        drop(temp);
+    let displayed_name_initial = if summoner_name == "current" {
         get_game_name_simple().await?
     } else {
-        temp
+        summoner_name
+            .split('#')
+            .next()
+            .unwrap_or(&summoner_name)
+            .to_owned()
     };
 
     debug!("Summoner name is : {summoner_name}");
@@ -247,7 +242,7 @@ pub async fn build_dashboard(
     };
 
     // Basic fields: use cache if still fresh
-    let mut display_name = displayed_name;
+    let mut display_name = displayed_name_initial;
     let mut level: u32 = 0;
     let mut profile_icon_id: u32 = 0;
     let mut profile_icon_path = String::new();
@@ -267,12 +262,11 @@ pub async fn build_dashboard(
             },
         )
         .optional()?
+        && now - updated_at <= TTL_SUMMONER_FIELDS_SECS
     {
-        if now - updated_at <= TTL_SUMMONER_FIELDS_SECS {
-            level = lvl as u32;
-            profile_icon_id = icon_id as u32;
-            profile_icon_path = icon_path;
-        }
+        level = lvl as u32;
+        profile_icon_id = icon_id as u32;
+        profile_icon_path = icon_path;
     }
 
     if level == 0 || profile_icon_id == 0 || profile_icon_path.is_empty() {

@@ -1,12 +1,13 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use reqwest;
 use serde::{Deserialize, Serialize};
+use std::ffi::OsString;
 use std::io;
 use std::num::ParseIntError;
-use std::path::PathBuf;
-use sysinfo::System;
-use tokio::fs::File;
-use tokio::io::AsyncReadExt;
+use std::path::{Path, PathBuf};
+use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System, UpdateKind};
+use tokio::fs;
+use tokio::time::{Duration, sleep};
 use tracing::debug;
 
 /// Errors that can occur when interacting with the LCU API.
@@ -81,51 +82,77 @@ impl Lockfile {
         Self::parse_lockfile_contents(&contents)
     }
 
+    // Windows-focused, robust approach:
+    // - Prefer cwd/exe paths from the process (no fragile arg parsing).
+    // - Fallback to parsing --output-base-dir (handles both forms and quotes).
+    // - Short retries for when the file appears slightly later.
     async fn locate_lockfile() -> Result<String, io::Error> {
-        #[cfg(target_os = "windows")]
-        let mut sys = System::new_all();
-        sys.refresh_all();
+        let mut sys = System::new_with_specifics(
+            RefreshKind::nothing().with_processes(
+                ProcessRefreshKind::nothing()
+                    .with_exe(UpdateKind::Always)
+                    .with_cwd(UpdateKind::Always)
+                    .with_cmd(UpdateKind::Always),
+            ),
+        );
 
-        let args = sys
-            .processes_by_exact_name("LeagueClientUx.exe".as_ref())
-            .flat_map(|process| process.cmd())
-            .filter_map(|os| os.to_str())
-            .next();
+        // Refresh all processes and ask to update the list (true)
+        sys.refresh_processes(ProcessesToUpdate::All, true);
 
-        debug!(args);
-
-        let output_dir = sys
-            .processes_by_exact_name("LeagueClientUx.exe".as_ref())
-            .flat_map(|process| process.cmd())
-            .filter_map(|os| {
-                os.to_str().and_then(|arg| {
-                    arg.strip_prefix("--output-base-dir=")
-                        .map(|v| v.to_string())
-                })
+        let proc = sys
+            .processes()
+            .values()
+            .find(|p| {
+                p.name()
+                    .to_string_lossy()
+                    .to_ascii_lowercase()
+                    .contains("leagueclientux")
             })
-            .next();
+            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "LCU not running"))?;
 
-        let lockfile_path = match output_dir {
-            Some(dir) => {
-                let path = PathBuf::from(dir).join("lockfile");
-                debug!("Process uses output dir: {}", path.display());
-                path
-            }
-            None => {
-                debug!("No LeagueClientUx.exe process found with --output-base-dir");
-                return Err(io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "LeagueClientUx.exe not running or missing --output-base-dir",
-                ));
-            }
-        };
+        let mut candidates: Vec<PathBuf> = Vec::new();
 
-        // Open and read lockfile contents
-        let mut file = File::open(&lockfile_path).await?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents).await?;
-        Ok(contents)
+        if let Some(cwd) = proc.cwd() {
+            candidates.push(cwd.join("lockfile"));
+        }
+        if let Some(exe) = proc.exe()
+            && let Some(dir) = exe.parent()
+        {
+            candidates.push(dir.join("lockfile"));
+        }
+
+        // Fallback: parse --output-base-dir if cwd/exe didn't work
+        if candidates.iter().all(|p| !p.exists())
+            && let Some(base) = parse_output_base_dir(proc.cmd())
+        {
+            candidates.push(Path::new(&base).join("lockfile"));
+        }
+
+        // Optional last-resort default
+        if candidates.is_empty() {
+            candidates.push(PathBuf::from(r"C:\Riot Games\League of Legends\lockfile"));
+        }
+
+        debug!("Lockfile candidates: {candidates:?}");
+
+        for path in candidates {
+            for _ in 0..15 {
+                match fs::read_to_string(&path).await {
+                    Ok(s) => return Ok(s),
+                    Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                        sleep(Duration::from_millis(120)).await;
+                    }
+                    Err(e) => return Err(e),
+                }
+            }
+        }
+
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "LCU lockfile not found",
+        ))
     }
+
     fn parse_lockfile_contents(contents: &str) -> Result<Self, LockfileError> {
         let parts: Vec<&str> = contents.trim().split(':').collect();
         if parts.len() != 5 {
@@ -162,10 +189,10 @@ impl Lockfile {
 impl std::fmt::Display for Lockfile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
-          f,
-          "Lockfile {{\n  Client: {}\n  PID: {}\n  API Port: {}\n  Password: [HIDDEN]\n  Protocol: {}\n}}",
-          self._league_client, self._process_id, self.api_port, self._protocol
-      )
+            f,
+            "Lockfile {{\n  Client: {}\n  PID: {}\n  API Port: {}\n  Password: [HIDDEN]\n  Protocol: {}\n}}",
+            self._league_client, self._process_id, self.api_port, self._protocol
+        )
     }
 }
 
@@ -206,4 +233,24 @@ impl LeagueApiClient {
     pub async fn get_tag_line(&self) -> Result<String, LockfileError> {
         Ok(self.get_current_summoner().await?.tag_line)
     }
+}
+
+fn parse_output_base_dir(cmd: &[OsString]) -> Option<String> {
+    for (i, a) in cmd.iter().enumerate() {
+        let s = a.to_string_lossy();
+        if let Some(rest) = s.strip_prefix("--output-base-dir=") {
+            return Some(trim_quotes(rest));
+        }
+        if s == "--output-base-dir"
+            && let Some(next) = cmd.get(i + 1)
+        {
+            return Some(trim_quotes(&next.to_string_lossy()));
+        }
+    }
+    None
+}
+
+fn trim_quotes(s: &str) -> String {
+    s.trim_matches(|c| c == '"' || c == '\'' || c == ' ')
+        .to_string()
 }
